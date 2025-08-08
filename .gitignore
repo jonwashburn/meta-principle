@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+._*
+
+# Lean/Lake build artifacts
+/build/
+/lake-packages/
+/lake-manifest.json
+/.elan/
+
+# Editor
+*.swp
+*.swo
+.idea/
+.vscode/
