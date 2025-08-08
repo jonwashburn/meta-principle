@@ -45,4 +45,36 @@ theorem eight_tick_minimal : True := by
 theorem hypercube_minimal_period (D : Nat) (hD : 0 < D) : True := by
   trivial
 
+/-!  Minimality via cardinality (covering all vertices requires at least 8 ticks) -/
+
+open Function
+
+lemma card_V : Fintype.card V = 8 := by
+  classical
+  -- card (Fin 3 → Bool) = (card Bool)^(card (Fin 3)) = 2^3 = 8
+  have h := Fintype.card_fun (Fin 3) Bool
+  -- h : Fintype.card V = Fintype.card Bool ^ Fintype.card (Fin 3)
+  have : Fintype.card V = (2 : Nat) ^ 3 := by
+    simpa using h
+  have : Fintype.card V = 8 := by
+    simpa using this
+  exact this
+
+/-- Any surjection from `Fin T` onto `V` forces `T ≥ 8`. -/
+theorem period_ge_eight_of_surjective {T : Nat} {f : Fin T → V}
+    (hs : Surjective f) : 8 ≤ T := by
+  classical
+  -- `card V ≤ card (Fin T)` from surjectivity
+  have hcard := Fintype.card_le_of_surjective f hs
+  -- rewrite both sides
+  simpa [card_V, Fintype.card_fin] using hcard
+
+/-- No period `< 8` can cover all 8 vertices. -/
+theorem no_cover_with_period_lt_eight {T : Nat} (hT : T < 8) :
+    ¬ ∃ f : Fin T → V, Surjective f := by
+  intro h
+  rcases h with ⟨f, hs⟩
+  have : 8 ≤ T := period_ge_eight_of_surjective (f := f) hs
+  exact Nat.not_le_of_gt hT this
+
 end MetaPrinciple
