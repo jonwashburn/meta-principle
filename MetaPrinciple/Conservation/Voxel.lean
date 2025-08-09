@@ -16,7 +16,7 @@ def Q3 : SimpleGraph V where
 /-- Oriented face (placeholder). -/
 structure Face where
   verts : Fin 4 → V
-  ordered : True
+  cyclic : True
 
 /-- Discrete Stokes / divergence identity (skeleton). -/
 theorem discrete_stokes
