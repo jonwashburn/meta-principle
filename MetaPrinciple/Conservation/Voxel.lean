@@ -47,4 +47,11 @@ theorem boundary_flux_vanishes_on_closed_surface
   -- Use discrete divergence theorem and conservation
   trivial
 
+/-- Coarse‑grained limit: outline that discrete identities converge to continuum divergence law. -/
+theorem coarse_grained_limit_outline
+  {M : RecognitionStructure} {C : Type} [LinearOrderedAddCommGroup C]
+  (L : Ledger M C) : True := by
+  -- Sketch: use mesh refinement on Q3 and Riemann-sum style arguments
+  trivial
+
 end MetaPrinciple

@@ -46,6 +46,9 @@ instance : LE Carrier := ⟨fun _ _ => True⟩
 instance : Preorder Carrier :=
 { le := (· ≤ ·), le_refl := by intro _; trivial, le_trans := by intro _ _ _ _ _; trivial }
 
+/-- Archimedean property for the quotient carrier (placeholder statement). -/
+theorem archimedean_carrier : True := by trivial
+
 /-- Induced ledger from the quotient carrier (skeleton). -/
 def quotientLedger (M : RecognitionStructure) : Ledger M Carrier :=
 { delta := QuotientAddGroup.mk (SymPairsSubgroup) (0 : F)
