@@ -1,4 +1,5 @@
 import MetaPrinciple.Recognition.Ledger.Core
+import Mathlib/GroupTheory/FreeAbelianGroup
 
 namespace MetaPrinciple
 
@@ -15,8 +16,7 @@ structure Edge (M : RecognitionStructure) where
   ok  : M.recog src dst
 
 /-- Free abelian group over edges (placeholder for `FreeAbelianGroup`). -/
-structure FreeAbGroup (α : Type) : Type :=
-  (carrier : Type)
+abbrev FreeAbGroup (α : Type) := FreeAbelianGroup α
 
 /-- Ledger constructed from the free abelian group (skeleton). -/
 def ledgerFromFree (M : RecognitionStructure) : Ledger M ℝ :=
@@ -34,8 +34,8 @@ instance conserves_ledgerFromFree (M : RecognitionStructure) :
   {
     conserve := by
       intro ch hclosed
-      -- sum telescopes to zero on closed chains
-      simp [ledgerFromFree, chainCost]
+      -- φ(last) − φ(first) = 0 for closed chains
+      simp [ledgerFromFree, phi, chainFlux, hclosed]
   }
 
 end MetaPrinciple
