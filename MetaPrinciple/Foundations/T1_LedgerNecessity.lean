@@ -24,5 +24,3 @@ theorem T1_ledger_necessity (M : RecognitionStructure) [Finiteness M]
   exact ⟨L, by simpa using L.delta_pos⟩
 
 end MetaPrinciple
-
-
