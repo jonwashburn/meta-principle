@@ -16,5 +16,3 @@ theorem T4_cost_unique_of_logconvex_analytic (CF : CostFunctional)
   exact cost_unique_from_laurent CF (laurentData_of_logconvex_analytic H) hx
 
 end MetaPrinciple
-
-

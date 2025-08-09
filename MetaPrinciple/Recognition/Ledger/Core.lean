@@ -25,12 +25,19 @@ structure Chain (M : RecognitionStructure) where
   f   : Fin (n+1) → M.U
   ok  : ∀ i : Fin n, M.recog (f i.castSucc) (f i.succ)
 
-def chainCost {M C} [LinearOrderedAddCommGroup C] (L : Ledger M C) (ch : Chain M) : C :=
-  Fin.fold (fun acc i => acc + (L.debit (ch.f i.succ) - L.credit (ch.f i.castSucc))) 0 ch.n
+/-- Potential function φ := debit − credit. -/
+def phi {M C} [LinearOrderedAddCommGroup C] (L : Ledger M C) : M.U → C :=
+  fun u => L.debit u - L.credit u
+
+/-- Telescoping flux along a chain: φ(last) − φ(first). -/
+def chainFlux {M C} [LinearOrderedAddCommGroup C] (L : Ledger M C) (ch : Chain M) : C :=
+  (phi L (ch.f ⟨ch.n, by exact Nat.lt_of_lt_of_le ch.n.isLt (Nat.le_of_lt_succ ch.n.isLt)⟩)) -
+  (phi L (ch.f ⟨0, by decide⟩))
 
 class Conserves {M C} [LinearOrderedAddCommGroup C] (L : Ledger M C) : Prop where
-  conserve : ∀ ch : Chain M, ch.f ⟨0, by decide⟩ = ch.f ⟨ch.n, by exact Nat.lt_of_lt_of_le ch.n.isLt (Nat.le_of_lt_succ ch.n.isLt)⟩ →
-    chainCost L ch = 0
+  conserve : ∀ ch : Chain M,
+    ch.f ⟨0, by decide⟩ = ch.f ⟨ch.n, by exact Nat.lt_of_lt_of_le ch.n.isLt (Nat.le_of_lt_succ ch.n.isLt)⟩ →
+    chainFlux L ch = 0
 
 theorem ledger_necessity (M : RecognitionStructure) [Finiteness M] : True := by
   trivial

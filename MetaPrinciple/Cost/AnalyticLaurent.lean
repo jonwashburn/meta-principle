@@ -18,5 +18,3 @@ theorem laurentData_of_logconvex_analytic {F : ℝ → ℝ}
   H.laurent
 
 end MetaPrinciple
-
-

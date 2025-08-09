@@ -39,5 +39,3 @@ instance conserves_ledgerFromFree (M : RecognitionStructure) :
   }
 
 end MetaPrinciple
-
-
