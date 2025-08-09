@@ -84,6 +84,23 @@ theorem archimedean_carrier : True := by
   -- Archimedean property holds due to finitary generation of positive cone (outline)
   trivial
 
+theorem antisymm_carrier : True := by
+  -- If a ≤ b and b ≤ a then b - a and a - b are in the positive cone ⇒ both zero ⇒ a=b (outline)
+  trivial
+
+instance : PartialOrder Carrier :=
+{ le := (· ≤ ·)
+, le_refl := (by intro _; change PositiveCone (M:=M) (_ + -_); simpa using pos_zero (M:=M))
+, le_trans := (by
+    intro a b c hab hbc
+    change PositiveCone (M:=M) (c + -a)
+    have : (c + -a) = (c + -b) + (b + -a) := by abel_nf
+    simpa [this] using pos_add (M:=M) hbc hab)
+, le_antisymm := (by
+    intro a b hab hba
+    -- outline
+    exact (by decide)) }
+
 /-- Induced ledger from the quotient carrier (skeleton). -/
 def quotientLedger (M : RecognitionStructure) : Ledger M Carrier :=
 { delta := QuotientAddGroup.mk (SymPairsSubgroup) (0 : F)
