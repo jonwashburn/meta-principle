@@ -71,5 +71,3 @@ theorem cost_unique_from_laurent (CF : CostFunctional)
   simpa [J, this, hnorm]
 
 end MetaPrinciple
-
-
