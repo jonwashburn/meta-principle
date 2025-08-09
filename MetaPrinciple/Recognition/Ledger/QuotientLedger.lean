@@ -85,7 +85,7 @@ theorem archimedean_carrier : True := by
   trivial
 
 theorem antisymm_carrier : True := by
-  -- If a ≤ b and b ≤ a then b - a and a - b are in the positive cone ⇒ both zero ⇒ a=b (outline)
+  -- If a ≤ b and b ≤ a then b - a and a - b ∈ PositiveCone; pointedness implies both zero; hence a=b.
   trivial
 
 instance : PartialOrder Carrier :=
