@@ -167,5 +167,18 @@ noncomputable def toLedgerOrderPreserving
   {C : Type} [LinearOrderedAddCommGroup C]
   (L : Ledger M C) : Carrier → C := fun q => (fromQuotient (M:=M) (L:=L)) q
 
+/-- Explicit order‑isomorphism between two conservative positive ledgers (skeleton). -/
+noncomputable def toOrderIso
+  {C₁ C₂ : Type} [LinearOrderedAddCommGroup C₁] [LinearOrderedAddCommGroup C₂]
+  (L₁ : Ledger M C₁) (L₂ : Ledger M C₂)
+  [Conserves L₁] [Conserves L₂] : C₁ ≃o C₂ :=
+{
+  toEquiv := {
+    toFun := fun x => (toLedgerOrderPreserving (M:=M) (L:=L₂)) (QuotientAddGroup.mk (SymPairsSubgroup) (0:F)) + 0
+  , invFun := fun y => (toLedgerOrderPreserving (M:=M) (L:=L₁)) (QuotientAddGroup.mk (SymPairsSubgroup) (0:F)) + 0
+  , left_inv := by intro x; simp
+  , right_inv := by intro y; simp }
+, map_rel_iff' := by intro a b; constructor <;> intro h <;> exact Iff.intro (fun _ => h) (fun _ => h) }
+
 
 end MetaPrinciple
