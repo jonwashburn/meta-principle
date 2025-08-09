@@ -1,5 +1,5 @@
 import MetaPrinciple.Recognition.Ledger.Core
-import Mathlib/GroupTheory/FreeAbelianGroup
+import Mathlib.GroupTheory.FreeAbelianGroup
 
 namespace MetaPrinciple
 

@@ -10,5 +10,3 @@ theorem T2_atomicity
   no_concurrent_postings (L := L)
 
 end MetaPrinciple
-
-

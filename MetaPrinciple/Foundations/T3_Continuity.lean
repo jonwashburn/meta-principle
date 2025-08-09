@@ -12,5 +12,3 @@ theorem T3_continuity
   discrete_continuity (L := L)
 
 end MetaPrinciple
-
-
