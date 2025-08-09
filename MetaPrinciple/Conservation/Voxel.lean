@@ -13,6 +13,20 @@ def Q3 : SimpleGraph V where
   symm := by intro u v h; simpa [adj] using h
   loopless := by intro u h; simp [adj] at h
 
+/-- Oriented face (placeholder). -/
+structure Face where
+  verts : Fin 4 → V
+  ordered : True
+
+/-- Discrete Stokes / divergence identity (skeleton). -/
+theorem discrete_stokes
+  {M : RecognitionStructure} {C : Type} [LinearOrderedAddCommGroup C]
+  (L : Ledger M C)
+  (ch : Chain M)
+  : True := by
+  -- Sum of oriented edge contributions over the boundary equals interior sum
+  trivial
+
 /-- Discrete divergence theorem (skeleton): sum of edge fluxes over a voxel equals boundary flux. -/
 theorem discrete_divergence_theorem
   {M : RecognitionStructure} {C : Type} [LinearOrderedAddCommGroup C]
@@ -30,5 +44,3 @@ theorem boundary_flux_vanishes_on_closed_surface
   trivial
 
 end MetaPrinciple
-
-
