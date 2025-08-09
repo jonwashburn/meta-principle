@@ -18,13 +18,17 @@ structure Face where
   verts : Fin 4 → V
   cyclic : True
 
+/-- Oriented boundary edges for a face. -/
+def Face.boundary (f : Face) : Fin 4 → (V × V) :=
+  fun i => (f.verts i, f.verts ⟨(i.val + 1) % 4, by decide⟩)
+
 /-- Discrete Stokes / divergence identity (skeleton). -/
 theorem discrete_stokes
   {M : RecognitionStructure} {C : Type} [LinearOrderedAddCommGroup C]
   (L : Ledger M C)
-  (ch : Chain M)
+  (f : Face)
   : True := by
-  -- Sum of oriented edge contributions over the boundary equals interior sum
+  -- Sum of oriented edge contributions over the boundary equals interior posting sum (skeleton)
   trivial
 
 /-- Discrete divergence theorem (skeleton): sum of edge fluxes over a voxel equals boundary flux. -/
