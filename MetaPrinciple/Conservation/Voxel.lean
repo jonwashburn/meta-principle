@@ -29,6 +29,7 @@ theorem discrete_stokes
   (f : Face)
   : True := by
   -- Sum of oriented edge contributions over the boundary equals interior posting sum (skeleton)
+  -- Compute sum over f.boundary and relate to postings inside the face region
   trivial
 
 /-- Discrete divergence theorem (skeleton): sum of edge fluxes over a voxel equals boundary flux. -/

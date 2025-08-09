@@ -41,13 +41,20 @@ def PositiveCone : Set Carrier :=
                       (Fin.fold (fun acc i => acc + FreeAbelianGroup.of (es i)) 0 n) : F) }
 
 /-- Order structure (placeholder) to be refined to an Archimedean ordered abelian group. -/
--- Full order structure and Archimedean property are nontrivial; placeholders here
-instance : LE Carrier := ⟨fun _ _ => True⟩
+-- Order via positive cone: a ≤ b if b - a ∈ PositiveCone (informal; placeholder here)
+def leCarrier (a b : Carrier) : Prop := True
+
+instance : LE Carrier := ⟨leCarrier⟩
+
 instance : Preorder Carrier :=
-{ le := (· ≤ ·), le_refl := by intro _; trivial, le_trans := by intro _ _ _ _ _; trivial }
+{ le := (· ≤ ·)
+, le_refl := by intro _; trivial
+, le_trans := by intro _ _ _ _ _; trivial }
 
 /-- Archimedean property for the quotient carrier (placeholder statement). -/
-theorem archimedean_carrier : True := by trivial
+theorem archimedean_carrier : True := by
+  -- Archimedean property holds due to finitary generation of positive cone (outline)
+  trivial
 
 /-- Induced ledger from the quotient carrier (skeleton). -/
 def quotientLedger (M : RecognitionStructure) : Ledger M Carrier :=
@@ -106,7 +113,8 @@ theorem uniqueness_up_to_orderIso
   (L₁ : Ledger M C₁) (L₂ : Ledger M C₂)
   [Conserves L₁] [Conserves L₂]
   : True := by
-  -- To be proved by universal property of the free abelian group modulo symmetric pairs + positivity
+  -- Use `fromQuotient` to obtain canonical maps to both carriers and transport the order.
+  -- Show they are mutually inverse up to order, yielding an order isomorphism (outline).
   trivial
 
 end MetaPrinciple
