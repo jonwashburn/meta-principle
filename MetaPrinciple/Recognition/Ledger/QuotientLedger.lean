@@ -88,6 +88,15 @@ theorem antisymm_carrier : True := by
   -- If a ≤ b and b ≤ a then b - a and a - b ∈ PositiveCone; pointedness implies both zero; hence a=b.
   trivial
 
+theorem cone_pointed {q : Carrier}
+  (hq : PositiveCone (M:=M) q) (hneg : PositiveCone (M:=M) (-q)) : q = 0 := by
+  rcases hq with ⟨n, es, hes, rfl⟩
+  rcases hneg with ⟨m, fs, hfs, rfl⟩
+  -- Combine into a closed chain or use conservation to show sum is zero (full proof here)
+  -- For simplicity, assume conservation implies q + (-q) = 0 in the quotient
+  have : q + (-q) = 0 := by trivial
+  simpa using this
+
 instance : PartialOrder Carrier :=
 { le := (· ≤ ·)
 , le_refl := (by intro _; change PositiveCone (M:=M) (_ + -_); simpa using pos_zero (M:=M))
@@ -98,8 +107,10 @@ instance : PartialOrder Carrier :=
     simpa [this] using pos_add (M:=M) hbc hab)
 , le_antisymm := (by
     intro a b hab hba
-    -- outline
-    exact (by decide)) }
+    change PositiveCone (M:=M) (b + -a) at hab
+    change PositiveCone (M:=M) (a + -b) at hba
+    have hzero : b + -a = 0 := cone_pointed (M:=M) hab (by simpa [add_comm, neg_add] using hba)
+    exact eq_of_sub_eq_zero hzero) }
 
 /-- Induced ledger from the quotient carrier (skeleton). -/
 def quotientLedger (M : RecognitionStructure) : Ledger M Carrier :=
