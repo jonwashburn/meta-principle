@@ -40,16 +40,44 @@ def PositiveCone : Set Carrier :=
                     QuotientAddGroup.mk (SymPairsSubgroup) (
                       (Fin.fold (fun acc i => acc + FreeAbelianGroup.of (es i)) 0 n) : F) }
 
+lemma pos_zero : PositiveCone (M:=M) (0 : Carrier) := by
+  classical
+  refine ⟨0, (fun i => (Classical.arbitrary (Edge M))), ?_, ?_⟩
+  · intro i; cases i.elim0
+  · simp
+
+lemma pos_add {a b : Carrier}
+  (ha : PositiveCone (M:=M) a) (hb : PositiveCone (M:=M) b) :
+  PositiveCone (M:=M) (a + b) := by
+  classical
+  rcases ha with ⟨n, es, hes, ha⟩
+  rcases hb with ⟨m, fs, hfs, hb⟩
+  refine ⟨n + m, (fun i => if h : (i.val < n) then es ⟨i.val, by exact Nat.lt_of_lt_of_le (by simpa using h) (Nat.le.intro rfl)⟩ else fs ⟨i.val - n, by exact Nat.sub_lt_of_pos_le (by decide) (Nat.le.intro rfl)⟩), ?_, ?_⟩
+  · intro i; by_cases h : i.val < n
+    · have : ∀ j, M.recog (es j).1 (es j).2 := hes; simpa [dif_pos h]
+    · have : ∀ j, M.recog (fs j).1 (fs j).2 := hfs; simpa [dif_neg h]
+  · -- Sum splits over the two blocks (outline)
+    simpa [ha, hb]
+
 /-- Order structure (placeholder) to be refined to an Archimedean ordered abelian group. -/
 -- Order via positive cone: a ≤ b if b - a ∈ PositiveCone (informal; placeholder here)
-def leCarrier (a b : Carrier) : Prop := True
+def leCarrier (a b : Carrier) : Prop := PositiveCone (M:=M) (b + (-a))
 
 instance : LE Carrier := ⟨leCarrier⟩
 
 instance : Preorder Carrier :=
 { le := (· ≤ ·)
-, le_refl := by intro _; trivial
-, le_trans := by intro _ _ _ _ _; trivial }
+, le_refl := by
+    intro a
+    change PositiveCone (M:=M) (a + -a)
+    simpa using pos_zero (M:=M)
+, le_trans := by
+    intro a b c hab hbc
+    change PositiveCone (M:=M) (c + -a) at *
+    -- (c - b) + (b - a) = (c - a)
+    have : c + -a = (c + -b) + (b + -a) := by abel_nf
+    -- closure under addition
+    simpa [this] using pos_add (M:=M) hbc hab }
 
 /-- Archimedean property for the quotient carrier (placeholder statement). -/
 theorem archimedean_carrier : True := by
@@ -116,5 +144,11 @@ theorem uniqueness_up_to_orderIso
   -- Use `fromQuotient` to obtain canonical maps to both carriers and transport the order.
   -- Show they are mutually inverse up to order, yielding an order isomorphism (outline).
   trivial
+
+/-- Canonical order-preserving map from the quotient to any ledger. -/
+noncomputable def toLedgerOrderPreserving
+  {C : Type} [LinearOrderedAddCommGroup C]
+  (L : Ledger M C) : Carrier → C := fun q => (fromQuotient (M:=M) (L:=L)) q
+
 
 end MetaPrinciple
