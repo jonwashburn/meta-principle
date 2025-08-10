@@ -145,4 +145,12 @@ lemma nsmul_delta_injective {M : RecognitionStructure} {C : Type}
     | inl hlt => exact (ne_of_lt ((nsmul_delta_strict_mono (L := L)) hlt)) h
     | inr hgt => exact (ne_of_gt ((nsmul_delta_strict_mono (L := L)) hgt)).symm h
 
+/-- Any ledger is conservative for closed chains since `chainFlux` is a potential difference. -/
+instance conserves_all_ledgers {M : RecognitionStructure} {C : Type}
+    [LinearOrderedAddCommGroup C] (L : Ledger M C) : Conserves L :=
+{ conserve := by
+    intro ch hclosed
+    -- For a closed chain, the endpoints coincide, hence the potential difference vanishes
+    simp [chainFlux, hclosed] }
+
 end MetaPrinciple
