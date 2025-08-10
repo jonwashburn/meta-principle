@@ -2,6 +2,10 @@ import MetaPrinciple.Recognition.Ledger.Core
 
 namespace MetaPrinciple
 
+/-- A simple schedule assigning, for each natural tick, the unique posted entity. -/
+class TickSchedule (M : RecognitionStructure) where
+  postOf : Nat → M.U
+
 /-- Atomicity axiom: exactly one ledger hop is posted per tick. -/
 class AtomicTick (M : RecognitionStructure) (C : Type) [LinearOrderedAddCommGroup C]
   (L : Ledger M C) : Prop :=
@@ -21,5 +25,30 @@ theorem no_concurrent_postings
   have hv' : v = w := by
     exact (huniq v).1 hv
   simpa [hu', hv']
+
+/-- Construct an `AtomicTick` instance from a tick `postOf : Nat → M.U` schedule. -/
+noncomputable def scheduleAtomicTick
+   {M : RecognitionStructure} {C : Type} [LinearOrderedAddCommGroup C]
+   (L : Ledger M C) [TickSchedule M] : AtomicTick M C L :=
+{ postedAt := fun t u => u = (TickSchedule.postOf (M:=M) t)
+, unique_post := by
+    intro t
+    refine ⟨TickSchedule.postOf (M:=M) t, rfl, ?uniq⟩
+    intro u; constructor <;> intro h
+    · exact by simpa [h]
+    · simpa [h]
+}
+
+/-- Corollary: with a tick schedule, no two postings can share a tick. -/
+theorem T2_atomicity_of_schedule
+  {M : RecognitionStructure} {C : Type} [LinearOrderedAddCommGroup C]
+  (L : Ledger M C) [TickSchedule M]
+  : ∀ t u v, (scheduleAtomicTick (M:=M) (C:=C) L).postedAt t u →
+              (scheduleAtomicTick (M:=M) (C:=C) L).postedAt t v → u = v := by
+  -- use the generic lemma with the constructed instance
+  classical
+  -- Introduce the instance to use `no_concurrent_postings`
+  haveI : AtomicTick M C L := scheduleAtomicTick (M:=M) (C:=C) L
+  simpa using (no_concurrent_postings (L := L))
 
 end MetaPrinciple

@@ -52,12 +52,16 @@ lemma pos_add {a b : Carrier}
   classical
   rcases ha with ⟨n, es, hes, ha⟩
   rcases hb with ⟨m, fs, hfs, hb⟩
-  refine ⟨n + m, (fun i => if h : (i.val < n) then es ⟨i.val, by exact Nat.lt_of_lt_of_le (by simpa using h) (Nat.le.intro rfl)⟩ else fs ⟨i.val - n, by exact Nat.sub_lt_of_pos_le (by decide) (Nat.le.intro rfl)⟩), ?_, ?_⟩
+  -- Concatenate the lists of edges to witness positivity of a+b
+  refine ⟨n + m, (fun i =>
+      if h : (i.val < n) then es ⟨i.val, by exact Nat.lt_of_lt_of_le (by simpa using h) (Nat.le.intro rfl)⟩
+      else fs ⟨i.val - n, by exact Nat.sub_lt_of_pos_le (by decide) (Nat.le.intro rfl)⟩), ?_, ?_⟩
   · intro i; by_cases h : i.val < n
     · have : ∀ j, M.recog (es j).1 (es j).2 := hes; simpa [dif_pos h]
     · have : ∀ j, M.recog (fs j).1 (fs j).2 := hfs; simpa [dif_neg h]
-  · -- Sum splits over the two blocks (outline)
-    simpa [ha, hb]
+  · -- Positivity is closed under addition in the quotient
+    -- Outline: (sum es) + (sum fs) represents a + b in the quotient
+    simpa [ha, hb, add_comm, add_left_comm, add_assoc]
 
 /-- Order structure (placeholder) to be refined to an Archimedean ordered abelian group. -/
 -- Order via positive cone: a ≤ b if b - a ∈ PositiveCone (informal; placeholder here)
@@ -70,6 +74,7 @@ instance : Preorder Carrier :=
 , le_refl := by
     intro a
     change PositiveCone (M:=M) (a + -a)
+    -- 0 ∈ PositiveCone, and a + (-a) = 0
     simpa using pos_zero (M:=M)
 , le_trans := by
     intro a b c hab hbc
@@ -79,14 +84,14 @@ instance : Preorder Carrier :=
     -- closure under addition
     simpa [this] using pos_add (M:=M) hbc hab }
 
-/-- Archimedean property for the quotient carrier (placeholder statement). -/
-theorem archimedean_carrier : True := by
-  -- Archimedean property holds due to finitary generation of positive cone (outline)
-  trivial
+/- Archimedean property for the quotient carrier (future work) -/
+-- theorem archimedean_carrier : True := by
+--   trivial
 
-theorem antisymm_carrier : True := by
-  -- If a ≤ b and b ≤ a then b - a and a - b ∈ PositiveCone; pointedness implies both zero; hence a=b.
-  trivial
+-- Cone pointedness (to be proved later using `fromQuotient` and `Conserves`).
+-- theorem cone_pointed {q : Carrier}
+--   (hq : PositiveCone (M:=M) q) (hneg : PositiveCone (M:=M) (-q)) : q = 0 := by
+--   admit
 
 theorem cone_pointed {q : Carrier}
   (hq : PositiveCone (M:=M) q) (hneg : PositiveCone (M:=M) (-q)) : q = 0 := by
@@ -97,20 +102,7 @@ theorem cone_pointed {q : Carrier}
   have : q + (-q) = 0 := by trivial
   simpa using this
 
-instance : PartialOrder Carrier :=
-{ le := (· ≤ ·)
-, le_refl := (by intro _; change PositiveCone (M:=M) (_ + -_); simpa using pos_zero (M:=M))
-, le_trans := (by
-    intro a b c hab hbc
-    change PositiveCone (M:=M) (c + -a)
-    have : (c + -a) = (c + -b) + (b + -a) := by abel_nf
-    simpa [this] using pos_add (M:=M) hbc hab)
-, le_antisymm := (by
-    intro a b hab hba
-    change PositiveCone (M:=M) (b + -a) at hab
-    change PositiveCone (M:=M) (a + -b) at hba
-    have hzero : b + -a = 0 := cone_pointed (M:=M) hab (by simpa [add_comm, neg_add] using hba)
-    exact eq_of_sub_eq_zero hzero) }
+-- Once `cone_pointed` is available, upgrade to `PartialOrder`.
 
 /-- Induced ledger from the quotient carrier (skeleton). -/
 def quotientLedger (M : RecognitionStructure) : Ledger M Carrier :=
@@ -178,18 +170,12 @@ noncomputable def toLedgerOrderPreserving
   {C : Type} [LinearOrderedAddCommGroup C]
   (L : Ledger M C) : Carrier → C := fun q => (fromQuotient (M:=M) (L:=L)) q
 
-/-- Explicit order‑isomorphism between two conservative positive ledgers (skeleton). -/
-noncomputable def toOrderIso
-  {C₁ C₂ : Type} [LinearOrderedAddCommGroup C₁] [LinearOrderedAddCommGroup C₂]
-  (L₁ : Ledger M C₁) (L₂ : Ledger M C₂)
-  [Conserves L₁] [Conserves L₂] : C₁ ≃o C₂ :=
-{
-  toEquiv := {
-    toFun := fun x => (toLedgerOrderPreserving (M:=M) (L:=L₂)) (QuotientAddGroup.mk (SymPairsSubgroup) (0:F)) + 0
-  , invFun := fun y => (toLedgerOrderPreserving (M:=M) (L:=L₁)) (QuotientAddGroup.mk (SymPairsSubgroup) (0:F)) + 0
-  , left_inv := by intro x; simp
-  , right_inv := by intro y; simp }
-, map_rel_iff' := by intro a b; constructor <;> intro h <;> exact Iff.intro (fun _ => h) (fun _ => h) }
+-- Explicit order‑isomorphism between two conservative positive ledgers (future work).
+-- noncomputable def toOrderIso
+--   {C₁ C₂ : Type} [LinearOrderedAddCommGroup C₁] [LinearOrderedAddCommGroup C₂]
+--   (L₁ : Ledger M C₁) (L₂ : Ledger M C₂)
+--   [Conserves L₁] [Conserves L₂] : C₁ ≃o C₂ := by
+--   admit
 
 
 end MetaPrinciple
