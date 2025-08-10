@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meta-Principle Monolith - Machine-Verified Foundations of Physics</title>
+    <meta name="description" content="Complete Lean 4 formalization of the Meta-Principle and eight foundational theorems of Recognition Physics">
+    <meta property="og:title" content="Meta-Principle Monolith">
+    <meta property="og:description" content="Machine-verified proofs from tautology to physical constants">
+    <meta property="og:type" content="article">
+    
+    <!-- Structured data for AI crawlers -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareSourceCode",
+        "name": "Meta-Principle Monolith",
+        "description": "Complete Lean 4 formalization proving the Meta-Principle tautology and deriving eight foundational theorems",
+        "programmingLanguage": "Lean 4",
+        "codeRepository": "https://github.com/jonwashburn/meta-principle",
+        "downloadUrl": "https://raw.githubusercontent.com/jonwashburn/meta-principle/main/MetaPrinciple/Monolith.lean",
+        "author": {
+            "@type": "Organization",
+            "name": "Recognition Physics",
+            "url": "https://recognitionphysics.org"
+        },
+        "keywords": ["Lean", "formal verification", "physics", "mathematics", "Meta-Principle", "golden ratio", "dark matter"]
+    }
+    </script>
+    
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #0f1525;
+            --bg-code: #0b1021;
+            --text-primary: #e6e6e6;
+            --text-secondary: #a8b2d1;
+            --accent-gold: #ffd700;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --border: #2a3f5f;
+            --comment: #6c7a96;
+            --keyword: #c792ea;
+            --string: #c3e88d;
+            --function: #82aaff;
+            --type: #ffcb6b;
+            --number: #f78c6c;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        header {
+            text-align: center;
+            padding: 3rem 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 3rem;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+        
+        .meta-info {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+        
+        .meta-info span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+        }
+        
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-green));
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: var(--accent-gold);
+            border: 2px solid var(--accent-gold);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(79, 195, 247, 0.3);
+        }
+        
+        .toc {
+            background: var(--bg-code);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .toc h2 {
+            color: var(--accent-gold);
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+        
+        .toc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        
+        .toc-item {
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border-left: 3px solid var(--accent-blue);
+            transition: all 0.3s ease;
+        }
+        
+        .toc-item:hover {
+            background: var(--bg-primary);
+            border-left-color: var(--accent-gold);
+        }
+        
+        .toc-item a {
+            color: var(--text-primary);
+            text-decoration: none;
+            display: block;
+        }
+        
+        .toc-item .theorem-num {
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+        
+        .code-section {
+            margin-bottom: 3rem;
+        }
+        
+        .section-header {
+            background: linear-gradient(90deg, var(--bg-code), transparent);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--accent-gold);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--accent-gold);
+        }
+        
+        .line-range {
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .human-note {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(79, 195, 247, 0.1));
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            position: relative;
+        }
+        
+        .human-note::before {
+            content: "💡 Note";
+            position: absolute;
+            top: -0.75rem;
+            left: 1rem;
+            background: var(--bg-secondary);
+            padding: 0 0.5rem;
+            color: var(--accent-gold);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .human-note p {
+            margin-top: 0.5rem;
+            color: var(--text-primary);
+        }
+        
+        pre {
+            background: var(--bg-code);
+            border-radius: 8px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            position: relative;
+        }
+        
+        code {
+            font-family: inherit;
+        }
+        
+        /* Syntax highlighting */
+        .hljs-comment { color: var(--comment); font-style: italic; }
+        .hljs-keyword { color: var(--keyword); font-weight: 600; }
+        .hljs-string { color: var(--string); }
+        .hljs-function { color: var(--function); }
+        .hljs-type { color: var(--type); }
+        .hljs-number { color: var(--number); }
+        .hljs-meta { color: var(--accent-gold); }
+        
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            padding: 0.5rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .copy-btn:hover {
+            background: var(--bg-primary);
+            color: var(--accent-gold);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 4rem;
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+        }
+        
+        .spinner {
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--accent-gold);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        footer {
+            text-align: center;
+            padding: 3rem 0;
+            border-top: 1px solid var(--border);
+            margin-top: 4rem;
+            color: var(--text-secondary);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .meta-info {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            pre {
+                padding: 1rem;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Meta-Principle Monolith</h1>
+            <p class="subtitle">Complete Lean 4 Formalization of Recognition Physics</p>
+            
+            <div class="meta-info">
+                <span>📐 1662 lines</span>
+                <span>🔬 8 theorems</span>
+                <span>✓ Machine-verified</span>
+                <span>🔗 Lean 4.3.0</span>
+            </div>
+            
+            <div class="actions">
+                <a href="https://raw.githubusercontent.com/jonwashburn/meta-principle/main/MetaPrinciple/Monolith.lean" 
+                   class="btn btn-primary" download>
+                    📥 Download Monolith.lean
+                </a>
+                <a href="https://github.com/jonwashburn/meta-principle" 
+                   class="btn btn-secondary" target="_blank">
+                    📂 View Repository
+                </a>
+                <a href="#" onclick="copyAllCode(); return false;" 
+                   class="btn btn-secondary">
+                    📋 Copy All Code
+                </a>
+            </div>
+        </header>
+        
+        <section class="toc">
+            <h2>Table of Contents</h2>
+            <div class="toc-grid">
+                <div class="toc-item">
+                    <a href="#meta-principle">
+                        <span class="theorem-num">Core</span> Meta-Principle Tautology
+                    </a>
+                </div>
+                <div class="toc-item">
+                    <a href="#t1-ledger">
+                        <span class="theorem-num">T1</span> Ledger Necessity & Uniqueness
+                    </a>
+                </div>
+                <div class="toc-item">
+                    <a href="#t2-atomicity">
+                        <span class="theorem-num">T2</span> Atomic Time
+                    </a>
+                </div>
+                <div class="toc-item">
+                    <a href="#t3-conservation">
+                        <span class="theorem-num">T3</span> Conservation Laws
+                    </a>
+                </div>
+                <div class="toc-item">
+                    <a href="#t4-cost">
+                        <span class="theorem-num">T4</span> Cost Function J(x)
+                    </a>
+                </div>
+                <div class="toc-item">
+                    <a href="#t5-golden">
+                        <span class="theorem-num">T5</span> Golden Ratio φ
+                    </a>
+                </div>
+                <div class="toc-item">
+                    <a href="#t6-dimension">
+                        <span class="theorem-num">T6</span> Three Dimensions
+                    </a>
+                </div>
+                <div class="toc-item">
+                    <a href="#t7-period">
+                        <span class="theorem-num">T7</span> Eight-Tick Period
+                    </a>
+                </div>
+                <div class="toc-item">
+                    <a href="#t8-causality">
+                        <span class="theorem-num">T8</span> Speed of Light
+                    </a>
+                </div>
+            </div>
+        </section>
+        
+        <main id="code-content">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading Monolith.lean...</p>
+            </div>
+        </main>
+        
+        <footer>
+            <p>© 2024 Recognition Physics | Machine-Verified Truth</p>
+            <p>
+                <a href="https://recognitionphysics.org" style="color: var(--accent-gold);">recognitionphysics.org</a>
+            </p>
+        </footer>
+    </div>
+    
+    <script>
+        // Section markers for human annotations
+        const sectionAnnotations = {
+            'MetaPrinciple/Recognition/Meta.lean': {
+                title: 'The Meta-Principle',
+                note: 'This is where it all begins. "Nothing cannot recognize itself" is not a choice—it\'s a tautology that must be true in any self-consistent reality. The proof uses Lean\'s Empty type to show this is logically forced.'
+            },
+            'T1_LedgerNecessity': {
+                title: 'T1: The Universe Keeps Books',
+                note: 'If recognitions happen, they must be recorded. This proves the existence of a positive-cost, double-entry ledger. The universe literally maintains accounting books, and conservation laws are just balanced accounts.'
+            },
+            'T2_Atomicity': {
+                title: 'T2: Time Has a Heartbeat',
+                note: 'The ledger can\'t update everything at once. This proves time is discrete—one recognition posts per atomic tick, creating the fundamental rhythm of existence.'
+            },
+            'T3_Continuity': {
+                title: 'T3: What Goes Around Comes Around',
+                note: 'Walk any closed path through the ledger and the books balance to zero. This is the deep origin of all conservation laws—energy, momentum, charge—they\'re all just accounting identities.'
+            },
+            'T4_CostUnique': {
+                title: 'T4: The Universe\'s Penalty Function',
+                note: 'How does nature penalize imbalance? Demand fairness and scale-invariance, and only one function survives: J(x) = ½(x + 1/x). This unique shape makes extremes expensive and balance cheap.'
+            },
+            'T5_SelfSimilarity': {
+                title: 'T5: Why φ Rules Everything',
+                note: 'The golden ratio isn\'t mystical—it\'s the unique fixed point where self-similarity meets efficiency. When you split something optimally, φ emerges as the only sustainable ratio.'
+            },
+            'T6_Dimension3': {
+                title: 'T6: Space Must Be Three-Dimensional',
+                note: 'In fewer dimensions, paths tangle. In more, you waste energy. Three dimensions provide the minimal stable scaffold for recognition. We live in 3D because it\'s the cheapest configuration that works.'
+            },
+            'T7_EightTick': {
+                title: 'T7: The Eight-Beat of Reality',
+                note: 'In 3D, visiting all recognition states takes exactly 2³ = 8 steps. This creates the fundamental rhythm—an eight-tick cycle that all higher processes synchronize to.'
+            },
+            'T8_Causality': {
+                title: 'T8: Nothing Outruns Light',
+                note: 'With atomic ticks and local updates, information spreads one voxel per tick. The speed of light isn\'t a mysterious constant—it\'s the inevitable result of discrete, local ledger updates.'
+            }
+        };
+        
+        async function loadMonolith() {
+            try {
+                const response = await fetch('https://raw.githubusercontent.com/jonwashburn/meta-principle/main/MetaPrinciple/Monolith.lean');
+                const text = await response.text();
+                
+                // Parse the monolith into sections
+                const sections = parseMonolith(text);
+                
+                // Render the sections with annotations
+                const container = document.getElementById('code-content');
+                container.innerHTML = sections.map(section => renderSection(section)).join('');
+                
+                // Add syntax highlighting if available
+                if (typeof hljs !== 'undefined') {
+                    document.querySelectorAll('pre code').forEach((block) => {
+                        hljs.highlightBlock(block);
+                    });
+                }
+            } catch (error) {
+                document.getElementById('code-content').innerHTML = `
+                    <div class="human-note">
+                        <p>Error loading Monolith.lean: ${error.message}</p>
+                        <p>You can <a href="https://raw.githubusercontent.com/jonwashburn/meta-principle/main/MetaPrinciple/Monolith.lean" style="color: var(--accent-gold);">download it directly</a> instead.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function parseMonolith(text) {
+            const lines = text.split('\n');
+            const sections = [];
+            let currentSection = null;
+            let currentContent = [];
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                
+                // Check for section markers
+                if (line.startsWith('-- BEGIN FILE:') || line.startsWith('-- END FILE:')) {
+                    if (currentSection && currentContent.length > 0) {
+                        sections.push({
+                            ...currentSection,
+                            content: currentContent.join('\n'),
+                            endLine: i
+                        });
+                    }
+                    
+                    if (line.startsWith('-- BEGIN FILE:')) {
+                        const fileName = line.replace('-- BEGIN FILE:', '').trim();
+                        currentSection = {
+                            fileName,
+                            startLine: i + 1
+                        };
+                        currentContent = [];
+                    } else {
+                        currentSection = null;
+                        currentContent = [];
+                    }
+                } else if (currentSection) {
+                    currentContent.push(line);
+                }
+            }
+            
+            // Add the last section if exists
+            if (currentSection && currentContent.length > 0) {
+                sections.push({
+                    ...currentSection,
+                    content: currentContent.join('\n'),
+                    endLine: lines.length
+                });
+            }
+            
+            return sections;
+        }
+        
+        function renderSection(section) {
+            const sectionId = getSectionId(section.fileName);
+            const annotation = getAnnotation(section.fileName);
+            
+            return `
+                <div class="code-section" id="${sectionId}">
+                    <div class="section-header">
+                        <span class="section-title">${section.fileName}</span>
+                        <span class="line-range">Lines ${section.startLine}-${section.endLine}</span>
+                    </div>
+                    
+                    ${annotation ? `
+                        <div class="human-note">
+                            <p><strong>${annotation.title}</strong></p>
+                            <p>${annotation.note}</p>
+                        </div>
+                    ` : ''}
+                    
+                    <pre><code class="language-lean">${escapeHtml(section.content)}</code><button class="copy-btn" onclick="copyCode(this)">📋</button></pre>
+                </div>
+            `;
+        }
+        
+        function getSectionId(fileName) {
+            if (fileName.includes('Meta.lean')) return 'meta-principle';
+            if (fileName.includes('T1')) return 't1-ledger';
+            if (fileName.includes('T2')) return 't2-atomicity';
+            if (fileName.includes('T3')) return 't3-conservation';
+            if (fileName.includes('T4')) return 't4-cost';
+            if (fileName.includes('T5')) return 't5-golden';
+            if (fileName.includes('T6')) return 't6-dimension';
+            if (fileName.includes('T7')) return 't7-period';
+            if (fileName.includes('T8')) return 't8-causality';
+            return fileName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+        }
+        
+        function getAnnotation(fileName) {
+            for (const key in sectionAnnotations) {
+                if (fileName.includes(key)) {
+                    return sectionAnnotations[key];
+                }
+            }
+            return null;
+        }
+        
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+        
+        function copyCode(button) {
+            const code = button.parentElement.querySelector('code').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                const originalText = button.textContent;
+                button.textContent = '✓';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 2000);
+            });
+        }
+        
+        async function copyAllCode() {
+            try {
+                const response = await fetch('https://raw.githubusercontent.com/jonwashburn/meta-principle/main/MetaPrinciple/Monolith.lean');
+                const text = await response.text();
+                await navigator.clipboard.writeText(text);
+                alert('Complete Monolith.lean copied to clipboard!');
+            } catch (error) {
+                alert('Failed to copy: ' + error.message);
+            }
+        }
+        
+        // Load the monolith when page loads
+        document.addEventListener('DOMContentLoaded', loadMonolith);
+    </script>
+    
+    <!-- Optional: Include highlight.js for better syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/haskell.min.js"></script>
+</body>
+</html>
