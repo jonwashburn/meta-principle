@@ -16,5 +16,3 @@ theorem T7_hypercube (D : Nat) [HasGrayCode D] :
   hypercube_period_exact D
 
 end MetaPrinciple
-
-
