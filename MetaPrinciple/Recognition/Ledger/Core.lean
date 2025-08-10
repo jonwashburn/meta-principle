@@ -145,6 +145,22 @@ lemma nsmul_delta_injective {M : RecognitionStructure} {C : Type}
     | inl hlt => exact (ne_of_lt ((nsmul_delta_strict_mono (L := L)) hlt)) h
     | inr hgt => exact (ne_of_gt ((nsmul_delta_strict_mono (L := L)) hgt)).symm h
 
+/-- δ non‑rescalable: if s•δ = δ for a natural scale s then s = 1. -/
+lemma delta_nonrescalable {M : RecognitionStructure} {C : Type}
+    [LinearOrderedAddCommGroup C] (L : Ledger M C) {s : Nat}
+    (h : s • L.delta = L.delta) : s = 1 := by
+  have := nsmul_delta_injective (L := L) (m := s) (n := 1) h
+  simpa using this
+
+/-- Exclusion of base‑k modular wrap: distinct digits map to distinct multiples of δ. -/
+lemma no_kary_wrap {M : RecognitionStructure} {C : Type}
+    [LinearOrderedAddCommGroup C] (L : Ledger M C)
+    {k m n : Nat} (hk : 2 ≤ k) (hm : m < k) (hn : n < k) (hne : m ≠ n) :
+    m • L.delta ≠ n • L.delta := by
+  intro h
+  have : m = n := nsmul_delta_injective (L := L) h
+  exact hne this
+
 /-- Any ledger is conservative for closed chains since `chainFlux` is a potential difference. -/
 instance conserves_all_ledgers {M : RecognitionStructure} {C : Type}
     [LinearOrderedAddCommGroup C] (L : Ledger M C) : Conserves L :=
