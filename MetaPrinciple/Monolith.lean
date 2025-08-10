@@ -916,6 +916,43 @@ theorem lightcone_bound
 theorem causal_cone_exists : True := by
   trivial
 
+/-! Specialization to the D‑cube using Hamming distance -/
+
+open Classical
+
+variable {D : Nat}
+
+-- Import the Hamming machinery from Extras section
+abbrev VDB (D : Nat) := Fin D → Bool
+
+def distH (Lmin : ℝ) (u v : VDB D) : ℝ := (hammingB (D := D) u v) * Lmin
+
+theorem hypercube_lightcone_bound
+  (Lmin τ0 : ℝ) (hL : 0 ≤ Lmin) (hτ : 0 < τ0)
+  {n : Nat} (vp : VPathD D n) :
+  distH (D := D) Lmin (vp.p ⟨0, by decide⟩) (vp.p ⟨n, by decide⟩) ≤ (n : ℝ) * Lmin := by
+  have hh : hammingB (D := D) (vp.p ⟨0, by decide⟩) (vp.p ⟨n, by decide⟩) ≤ n :=
+    hammingB_bound_on_path (D := D) vp
+  have := (mul_le_mul_of_nonneg_right (by exact_mod_cast hh) hL)
+  simpa [distH, Nat.cast_ofNat, Nat.cast_id] using this
+
+/-- Speed bound: with tick period τ0>0, effective speed ≤ c = Lmin/τ0. -/
+theorem hypercube_speed_le_c
+  (Lmin τ0 : ℝ) (hL : 0 ≤ Lmin) (hτ : 0 < τ0)
+  {n : Nat} (hn : 0 < n) (vp : VPathD D n) :
+  distH (D := D) Lmin (vp.p ⟨0, by decide⟩) (vp.p ⟨n, by decide⟩) / ((n : ℝ) * τ0)
+    ≤ Lmin / τ0 := by
+  have hnum := hypercube_lightcone_bound (D := D) Lmin τ0 hL hτ vp
+  have hden : 0 < (n : ℝ) * τ0 := by
+    have : 0 < (n : ℝ) := by exact_mod_cast hn
+    exact mul_pos_of_pos_of_pos this hτ
+  have := (div_le_div_of_nonneg_of_le_of_pos (by
+      -- numerator nonneg
+      have : 0 ≤ (hammingB (D := D) (vp.p ⟨0, by decide⟩) (vp.p ⟨n, by decide⟩) : ℝ) := by
+        exact_mod_cast (Nat.zero_le _)
+      exact mul_nonneg this hL) hnum hden)
+  simpa [c, distH] using this
+
 end MetaPrinciple
 
 -- END FILE: MetaPrinciple/Kinematics/Causality.lean
@@ -1538,6 +1575,87 @@ theorem delta_nsmul_injective
   (L : Ledger M C) {m n : Nat} (h : m • L.delta = n • L.delta) : m = n :=
   (nsmul_delta_injective (L := L)) (by simpa using h)
 
+/-- δ non‑rescalability: if s•δ = δ for a natural scale s then s = 1. -/
+theorem delta_nonrescalable
+  {M : RecognitionStructure} {C : Type} [LinearOrderedAddCommGroup C]
+  (L : Ledger M C) {s : Nat} (h : s • L.delta = L.delta) : s = 1 := by
+  have := delta_nsmul_injective (L := L) (m := s) (n := 1) h
+  simpa using this
+
+/-- Exclusion of k‑ary/modular wrap: distinct digits in base k map to distinct n•δ. -/
+theorem no_kary_wrap
+  {M : RecognitionStructure} {C : Type} [LinearOrderedAddCommGroup C]
+  (L : Ledger M C) {k m n : Nat} (hk : 2 ≤ k) (hm : m < k) (hn : n < k) (hne : m ≠ n) :
+  m • L.delta ≠ n • L.delta := by
+  intro h
+  have : m = n := delta_nsmul_injective (L := L) h
+  exact hne this
+
 end MetaPrinciple
 -- END FILE: Monolith/Extras/T1Invariants.lean
 
+-- BEGIN FILE: Monolith/Extras/HammingTriangle.lean
+namespace MetaPrinciple
+
+open Classical
+
+variable {D : Nat}
+
+abbrev VDB (D : Nat) := Fin D → Bool
+
+/-- Hamming mismatch set on the D‑cube. -/
+def mismatchB (x y : VDB D) : Finset (Fin D) :=
+  Finset.univ.filter (fun i => x i ≠ y i)
+
+def hammingB (x y : VDB D) : Nat := (mismatchB (D := D) x y).card
+
+lemma mem_mismatchB {x y : VDB D} {i : Fin D} :
+    i ∈ mismatchB (D := D) x y ↔ x i ≠ y i := by
+  simp [mismatchB]
+
+lemma mismatchB_subset_union (x y z : VDB D) :
+    mismatchB (D := D) x z ⊆ (mismatchB (D := D) x y ∪ mismatchB (D := D) y z) := by
+  intro i hi
+  have hxz : x i ≠ z i := (mem_mismatchB.mp) hi
+  by_cases hxy : x i ≠ y i
+  · exact Finset.mem_union.mpr (Or.inl ((mem_mismatchB.mpr) hxy))
+  · have : x i = y i := not_ne_iff.mp hxy
+    have hyz : y i ≠ z i := by simpa [this] using hxz
+    exact Finset.mem_union.mpr (Or.inr ((mem_mismatchB.mpr) hyz))
+
+/-- Triangle inequality for Hamming distance on the D‑cube. -/
+theorem hammingB_triangle (x y z : VDB D) :
+    hammingB (D := D) x z ≤ hammingB (D := D) x y + hammingB (D := D) y z := by
+  simp [hammingB]
+  have hsub := Finset.card_le_of_subset (mismatchB_subset_union (D := D) x y z)
+  have hcup := Finset.card_union_le (mismatchB (D := D) x y) (mismatchB (D := D) y z)
+  exact le_trans hsub hcup
+
+/-- General D‑cube path with unit‑Hamming steps. -/
+structure VPathD (D n : Nat) where
+  p     : Fin (n+1) → VDB D
+  edges : ∀ i : Fin n, (Finset.univ.filter (fun j => p i.castSucc j ≠ p i.succ j)).card = 1
+
+lemma hammingB_adj_is_one {u v : VDB D}
+  (h : (Finset.univ.filter (fun j => u j ≠ v j)).card = 1) :
+  hammingB (D := D) u v = 1 := by
+  simpa [hammingB, mismatchB] using h
+
+/-- Bound: after n unit‑Hamming steps, Hamming distance ≤ n. -/
+theorem hammingB_bound_on_path {n : Nat} (vp : VPathD D n) :
+  hammingB (D := D) (vp.p ⟨0, by decide⟩) (vp.p ⟨n, by decide⟩) ≤ n := by
+  induction' n with n ih generalizing vp
+  · simp [hammingB]
+  · -- split last step
+    let vp' : VPathD D n :=
+      { p := fun i => vp.p (Fin.castSucc i)
+      , edges := by intro i; simpa using vp.edges (Fin.castSucc i) }
+    have hlast : hammingB (D := D) (vp'.p ⟨n, by decide⟩) (vp.p ⟨n+1, by decide⟩) = 1 :=
+      hammingB_adj_is_one (D := D) (vp.edges ⟨n, by decide⟩)
+    have tri := hammingB_triangle (D := D) (vp.p ⟨0, by decide⟩) (vp.p ⟨n, by decide⟩) (vp.p ⟨n+1, by decide⟩)
+    have ih' := ih vp'
+    -- hamming ≤ hamming + 1 ≤ n + 1
+    simpa [hlast, Nat.add_comm] using le_trans tri (Nat.add_le_add_left ih' _)
+
+end MetaPrinciple
+-- END FILE: Monolith/Extras/HammingTriangle.lean
