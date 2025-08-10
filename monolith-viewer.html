@@ -18,7 +18,7 @@
         "description": "Complete Lean 4 formalization proving the Meta-Principle tautology and deriving eight foundational theorems",
         "programmingLanguage": "Lean 4",
         "codeRepository": "https://github.com/jonwashburn/meta-principle",
-        "downloadUrl": "https://raw.githubusercontent.com/jonwashburn/meta-principle/main/MetaPrinciple/Monolith.lean",
+        "downloadUrl": "https://raw.githubusercontent.com/jonwashburn/meta-principle/main/_github/meta-principle/MetaPrinciple/Monolith.lean",
         "author": {
             "@type": "Organization",
             "name": "Recognition Physics",
@@ -333,14 +333,14 @@
             <p class="subtitle">Complete Lean 4 Formalization of Recognition Physics</p>
             
             <div class="meta-info">
-                <span>📐 1662 lines</span>
+                <span id="lines-info">📐 loading…</span>
                 <span>🔬 8 theorems</span>
                 <span>✓ Machine-verified</span>
                 <span>🔗 Lean 4.3.0</span>
             </div>
             
             <div class="actions">
-                <a href="https://raw.githubusercontent.com/jonwashburn/meta-principle/main/MetaPrinciple/Monolith.lean" 
+                <a id="download-lean" href="https://raw.githubusercontent.com/jonwashburn/meta-principle/main/_github/meta-principle/MetaPrinciple/Monolith.lean" 
                    class="btn btn-primary" download>
                     📥 Download Monolith.lean
                 </a>
@@ -351,6 +351,14 @@
                 <a href="#" onclick="copyAllCode(); return false;" 
                    class="btn btn-secondary">
                     📋 Copy All Code
+                </a>
+                <a href="https://github.com/jonwashburn/meta-principle/blob/main/_github/meta-principle/MetaPrinciple/Monolith.lean" 
+                   class="btn btn-secondary" target="_blank">
+                    🔎 View Monolith on GitHub
+                </a>
+                <a href="https://github.com/jonwashburn/meta-principle/blob/main/_github/meta-principle/MetaPrinciple/RS_CanonicalLedger.lean" 
+                   class="btn btn-secondary" target="_blank">
+                    🧩 RS_CanonicalLedger.lean
                 </a>
             </div>
         </header>
@@ -464,8 +472,13 @@
         
         async function loadMonolith() {
             try {
-                const response = await fetch('https://raw.githubusercontent.com/jonwashburn/meta-principle/main/MetaPrinciple/Monolith.lean');
+                const url = 'https://raw.githubusercontent.com/jonwashburn/meta-principle/main/_github/meta-principle/MetaPrinciple/Monolith.lean';
+                const response = await fetch(url);
                 const text = await response.text();
+                // update line count dynamically
+                const lines = text.split('\n').length;
+                const linesInfo = document.getElementById('lines-info');
+                if (linesInfo) linesInfo.textContent = `📐 ${lines} lines`;
                 
                 // Parse the monolith into sections
                 const sections = parseMonolith(text);
@@ -484,7 +497,7 @@
                 document.getElementById('code-content').innerHTML = `
                     <div class="human-note">
                         <p>Error loading Monolith.lean: ${error.message}</p>
-                        <p>You can <a href="https://raw.githubusercontent.com/jonwashburn/meta-principle/main/MetaPrinciple/Monolith.lean" style="color: var(--accent-gold);">download it directly</a> instead.</p>
+                        <p>You can <a href="https://raw.githubusercontent.com/jonwashburn/meta-principle/main/_github/meta-principle/MetaPrinciple/Monolith.lean" style="color: var(--accent-gold);">download it directly</a> instead.</p>
                     </div>
                 `;
             }
@@ -606,7 +619,7 @@
         
         async function copyAllCode() {
             try {
-                const response = await fetch('https://raw.githubusercontent.com/jonwashburn/meta-principle/main/MetaPrinciple/Monolith.lean');
+                const response = await fetch('https://raw.githubusercontent.com/jonwashburn/meta-principle/main/_github/meta-principle/MetaPrinciple/Monolith.lean');
                 const text = await response.text();
                 await navigator.clipboard.writeText(text);
                 alert('Complete Monolith.lean copied to clipboard!');
