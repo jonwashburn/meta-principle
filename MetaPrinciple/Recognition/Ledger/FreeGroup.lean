@@ -23,9 +23,12 @@ def ledgerFromFree (M : RecognitionStructure) : Ledger M ℝ :=
   {
     delta := 1
   , delta_pos := by norm_num
-  , debit := fun _ => 0
-  , credit := fun _ => 0
-  , de := by intro _ _ _; simp
+  , debit := fun _ => (1 : ℝ)
+  , credit := fun _ => (0 : ℝ)
+  , de := by
+      intro a b hab
+      -- debit b − credit a = 1 − 0 = 1 = delta
+      simp
   }
 
 /-- Conservation for closed chains via telescoping (stub). -/
