@@ -953,6 +953,45 @@ theorem hypercube_speed_le_c
       exact mul_nonneg this hL) hnum hden)
   simpa [c, distH] using this
 
+/-! Reachability version (endpoints defined by a D-cube path of length n) -/
+
+def ReachableD (D n : Nat) (v0 : VDB D) : Set (VDB D) :=
+  { v | ∃ p : VPathD D n, p.p ⟨0, by decide⟩ = v0 ∧ p.p ⟨n, by decide⟩ = v }
+
+theorem reachable_hamming_bound
+  {D n : Nat} {v0 v : VDB D}
+  (hv : v ∈ ReachableD D n v0) :
+  hammingB (D := D) v0 v ≤ n := by
+  classical
+  rcases hv with ⟨p, h0, hn⟩
+  have := hammingB_bound_on_path (D := D) (vp := p)
+  simpa [h0, hn] using this
+
+def distH (Lmin : ℝ) {D : Nat} (u v : VDB D) : ℝ := (hammingB u v) * Lmin
+
+theorem reachable_distance_bound
+  {D n : Nat} {v0 v : VDB D} {Lmin : ℝ}
+  (hL : 0 ≤ Lmin) (hv : v ∈ ReachableD D n v0) :
+  distH (D := D) Lmin v0 v ≤ (n : ℝ) * Lmin := by
+  classical
+  have hh : hammingB (D := D) v0 v ≤ n := reachable_hamming_bound (D := D) (n := n) (v0 := v0) (v := v) hv
+  have := mul_le_mul_of_nonneg_right (by exact_mod_cast hh) hL
+  simpa [distH] using this
+
+theorem reachable_speed_bound
+  {D n : Nat} {v0 v : VDB D} {Lmin τ0 : ℝ}
+  (hL : 0 ≤ Lmin) (hτ : 0 < τ0) (hn : 0 < n)
+  (hv : v ∈ ReachableD D n v0) :
+  distH (D := D) Lmin v0 v / ((n : ℝ) * τ0) ≤ Lmin / τ0 := by
+  have hdist := reachable_distance_bound (D := D) (n := n) (v0 := v0) (v := v) (Lmin := Lmin) hL hv
+  have hden : 0 < (n : ℝ) * τ0 := by
+    have : 0 < (n : ℝ) := by exact_mod_cast hn
+    exact mul_pos_of_pos_of_pos this hτ
+  have hnum_nonneg : 0 ≤ distH (D := D) Lmin v0 v := by
+    have : 0 ≤ (hammingB (D := D) v0 v : ℝ) := by exact_mod_cast (Nat.zero_le _)
+    simpa [distH] using mul_nonneg this hL
+  exact (div_le_div_of_nonneg_of_le_of_pos hnum_nonneg hdist hden)
+
 end MetaPrinciple
 
 -- END FILE: MetaPrinciple/Kinematics/Causality.lean
