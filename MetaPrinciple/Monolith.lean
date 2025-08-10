@@ -1523,3 +1523,21 @@ end MetaPrinciple
 
 -- END FILE: MetaPrinciple/Cost/Functional.lean
 
+-- BEGIN FILE: Monolith/Extras/T1Invariants.lean
+namespace MetaPrinciple
+
+/-- No modular wrap for δ: for any n > 0, n • δ ≠ 0. -/
+theorem delta_no_mod_wrap
+  {M : RecognitionStructure} {C : Type} [LinearOrderedAddCommGroup C]
+  (L : Ledger M C) {n : Nat} (hn : 0 < n) : n • L.delta ≠ 0 :=
+  nsmul_delta_ne_zero (L := L) hn
+
+/-- δ is rigid under normalization: if m • δ = n • δ then m = n. -/
+theorem delta_nsmul_injective
+  {M : RecognitionStructure} {C : Type} [LinearOrderedAddCommGroup C]
+  (L : Ledger M C) {m n : Nat} (h : m • L.delta = n • L.delta) : m = n :=
+  (nsmul_delta_injective (L := L)) (by simpa using h)
+
+end MetaPrinciple
+-- END FILE: Monolith/Extras/T1Invariants.lean
+

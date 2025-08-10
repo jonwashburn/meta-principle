@@ -11,5 +11,3 @@ theorem T8_causality_statement : True := by
   trivial
 
 end MetaPrinciple
-
-

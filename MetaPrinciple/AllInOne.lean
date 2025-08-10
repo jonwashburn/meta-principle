@@ -68,5 +68,3 @@ noncomputable def spine : Spine :=
 , T8_causal := T8_causality_statement }
 
 end MetaPrinciple
-
-
