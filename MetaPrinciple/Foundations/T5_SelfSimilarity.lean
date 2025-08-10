@@ -16,5 +16,3 @@ theorem T5_golden_fixed_point {x : ℝ} (hx : x = 1 + 1/x) (hxpos : 0 < x) : x =
   golden_fixed_point hx hxpos
 
 end MetaPrinciple
-
-
