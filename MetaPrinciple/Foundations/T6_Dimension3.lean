@@ -13,5 +13,3 @@ theorem T6_hopf_cost_bound [StableLinking] {R : ℝ} (hR : 1 ≤ R) :
   hopf_link_cost_lower_bound (R := R) hR
 
 end MetaPrinciple
-
-

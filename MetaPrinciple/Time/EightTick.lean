@@ -42,12 +42,12 @@ theorem eight_tick_minimal {T : Nat} (hT : T < 8) :
     ¬ ∃ f : Fin T → V, Surjective f :=
   no_cover_with_period_lt_eight (T := T) hT
 
-/-- Generalization to hypercubes: minimal period is `2^D` (existence by Gray codes,
-    lower bound by cardinality). Statement-level skeleton. -/
-theorem hypercube_minimal_period (D : Nat) (hD : 0 < D) : True := by
-  -- Existence: D-bit Gray codes yield a Hamiltonian cycle of length `2^D`.
-  -- Minimality: any covering of all `2^D` vertices needs at least `2^D` ticks.
-  trivial
+/-- Generalization to hypercubes: period `2^D` is achievable (Gray code) and minimal by cardinality. -/
+theorem hypercube_period_exact (D : Nat) [HasGrayCode D] :
+    (∃ w : RecWalkD D, True) ∧ (∀ {T : Nat}, T < 2 ^ D → ¬ ∃ f : Fin T → VD D, Surjective f) := by
+  refine ⟨?exist, ?minimal⟩
+  · exact gray_code_exists_allD D
+  · intro T hT; exact no_cover_with_period_lt_pow_two D hT
 
 /-!  Minimality via cardinality (covering all vertices requires at least 8 ticks) -/
 
