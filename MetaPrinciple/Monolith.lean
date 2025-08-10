@@ -61,6 +61,7 @@ import MetaPrinciple.Kinematics.Causality
 import MetaPrinciple.Recognition.Ledger.Core
 import MetaPrinciple.Recognition.Ledger.FreeGroup
 import MetaPrinciple.Recognition.Ledger.QuotientLedger
+import MetaPrinciple.RS_CanonicalLedger
 import MetaPrinciple.Recognition.Meta
 import MetaPrinciple.SelfSimilarity.Golden
 import MetaPrinciple.Space.Dimension3
