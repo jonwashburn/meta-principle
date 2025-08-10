@@ -1,6 +1,7 @@
 import Mathlib.Data.Real.Sqrt
 import Mathlib.Algebra.BigOperators.Basic
 import Mathlib.Tactic
+import MetaPrinciple.Cost.Functional
 
 namespace MetaPrinciple
 
