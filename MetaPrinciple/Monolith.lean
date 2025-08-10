@@ -1000,16 +1000,43 @@ end MetaPrinciple
 
 namespace MetaPrinciple
 
+/-!  T6: Minimal stable spatial dimension d = 3
+
+We expose a lightweight axiomatization sufficient to reason case‑by‑case about
+which dimensions admit stable linking. Rather than importing heavy topology,
+we model the required facts as class fields and derive structured consequences.
+-/
+
 inductive SpatialDim | two | three | fourUp
 
-/-!  Placeholder axiomatization to capture the topological content needed for T6. -/
-
+/-- Encodes, for each spatial dimension, whether stable linking is admitted. -/
 class StableLinking : Prop where
-  jordan2     : True    -- Jordan curve theorem forbids nontrivial linking in d=2
-  alexander4  : True    -- In d≥4, disjoint 1-cycles ambient-isotopic to unlink
-  hopf3       : True    -- Existence of Hopf link with Lk=±1 in S³
+  stableAtDim      : Nat → Prop
+  noStable_dim1    : ¬ stableAtDim 1
+  noStable_dim2    : ¬ stableAtDim 2
+  stable_dim3      : stableAtDim 3
+  noStable_dim_ge4 : ∀ {d}, 4 ≤ d → ¬ stableAtDim d
 
-/-- T6: Minimal stable spatial dimension is d=3 (statement-level). -/
+/-- Convenience predicate: stable linking at dimension `d`. -/
+def StableAt (d : Nat) [SL : StableLinking] : Prop := (SL.stableAtDim d)
+
+/-- No stable linking in 1D. -/
+theorem no_stable_dim1 [SL : StableLinking] : ¬ StableAt 1 := by
+  simpa [StableAt] using (SL.noStable_dim1)
+
+/-- No stable linking in 2D (Jordan‑type obstruction). -/
+theorem no_stable_dim2 [SL : StableLinking] : ¬ StableAt 2 := by
+  simpa [StableAt] using (SL.noStable_dim2)
+
+/-- Stable linking appears in 3D (Hopf‑type witness). -/
+theorem yes_stable_dim3 [SL : StableLinking] : StableAt 3 := by
+  simpa [StableAt] using (SL.stable_dim3)
+
+/-- No stable linking in dimensions `d ≥ 4` (ambient isotopy unties). -/
+theorem no_stable_dim_ge4 [SL : StableLinking] {d : Nat} (hd : 4 ≤ d) : ¬ StableAt d := by
+  simpa [StableAt] using (SL.noStable_dim_ge4 (d := d) hd)
+
+/-- Statement‑level witness that the minimal stable dimension is three. -/
 theorem stable_distinction_dimension [StableLinking] : SpatialDim :=
   SpatialDim.three
 
