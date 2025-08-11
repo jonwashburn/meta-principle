@@ -1,0 +1,97 @@
+{
+  "version": "1.0.0",
+  "description": "Dependency graph and metadata for Recognition Science framework",
+  "tags": {
+    "axiom": "Foundational assumption",
+    "assumption (external math)": "Mathematical fact from external source",
+    "theorem (proved here)": "Result proved in this framework",
+    "lemma": "Helper result",
+    "definition": "Term definition",
+    "calibration (units)": "Mapping to physical units",
+    "application (phenomenology)": "Empirical prediction (model-dependent)"
+  },
+  "core_modules": [
+    {
+      "path": "MetaPrinciple/Core/LedgerStrict.lean",
+      "type": "structure",
+      "provides": ["StrictLedger", "no_delta_rescaling", "NoConcurrency"],
+      "depends": ["Mathlib"],
+      "safe_for_core": true
+    },
+    {
+      "path": "MetaPrinciple/Core/CostFunctional.lean",
+      "type": "theorem",
+      "provides": ["J", "cost_functional_unique", "no_log_tails"],
+      "depends": ["Mathlib"],
+      "safe_for_core": true
+    },
+    {
+      "path": "MetaPrinciple/Core/AtomicScheduler.lean",
+      "type": "theorem",
+      "provides": ["AtomicSchedule", "k_is_natural", "optimal_is_golden"],
+      "depends": ["Core/LedgerStrict", "Mathlib"],
+      "safe_for_core": true
+    },
+    {
+      "path": "MetaPrinciple/Core/GapSeries.lean",
+      "type": "theorem",
+      "provides": ["gapSeries", "gap_series_closed_form", "J_bit"],
+      "depends": ["Mathlib"],
+      "safe_for_core": true
+    }
+  ],
+  "application_modules": [
+    {
+      "path": "MetaPrinciple/Applications/FineStructure.lean",
+      "type": "application",
+      "provides": ["alpha_predicted"],
+      "depends": ["Core/GapSeries", "voxel_regge_model"],
+      "safe_for_core": false,
+      "warning": "Model-dependent, requires voxel Regge assumptions"
+    }
+  ],
+  "dependency_rules": [
+    {
+      "rule": "No application imports in core",
+      "check": "Core/* cannot import Applications/*"
+    },
+    {
+      "rule": "Calibrations must be labeled",
+      "check": "Any SI unit mapping must have 'calibration' tag"
+    },
+    {
+      "rule": "External assumptions must be boxed",
+      "check": "Non-Mathlib mathematical facts must be marked 'assumption (external math)'"
+    }
+  ],
+  "glossary": {
+    "recognition": "Binary relation between entities in universe U",
+    "ledger": "Double-entry accounting structure with posting law",
+    "tick": "Discrete time unit, exactly one posting per tick",
+    "breath": "Complete cycle through all parities (2^d ticks)",
+    "gap": "Energy difference, quantized as ln(φ)",
+    "rung": "Discrete mass level indexed by charge composition",
+    "voxel": "3D lattice cell in spatial discretization"
+  },
+  "numerical_claims": [
+    {
+      "name": "golden_ratio",
+      "value": 1.6180339887,
+      "formula": "(1 + sqrt(5))/2",
+      "status": "proved"
+    },
+    {
+      "name": "J_bit",
+      "value": 0.4812118250596,
+      "formula": "ln(φ)",
+      "status": "proved"
+    },
+    {
+      "name": "alpha_fine_structure",
+      "value": 0.0072973525693,
+      "formula": "103/(102*π^5)",
+      "status": "model-dependent",
+      "dependencies": ["voxel_regge_model"]
+    }
+  ]
+}

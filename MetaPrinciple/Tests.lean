@@ -26,7 +26,7 @@ def TinyStructure : RecognitionStructure where
     intro a b c hab hbc
     -- In a 2-cycle, composition returns to start
     cases hab with
-    | inl h => 
+    | inl h =>
       cases hbc with
       | inl h' => simp [h.1, h'.2] at *
       | inr h' => exact Or.inl ⟨h.1, h'.2⟩
@@ -101,9 +101,9 @@ instance : AtomicTick TinyStructure ℤ TinyLedger where
       | succ _ => use false; simp
 
 /-- Verify T2 holds for our mock schedule. -/
-example : ∀ t u v, 
-  AtomicTick.postedAt t u → 
-  AtomicTick.postedAt t v → 
+example : ∀ t u v,
+  AtomicTick.postedAt t u →
+  AtomicTick.postedAt t v →
   u = v := T2_atomicity TinyLedger
 
 end MetaPrinciple.Tests
