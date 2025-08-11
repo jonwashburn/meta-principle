@@ -60,5 +60,3 @@ example : chainFlux tinyLedger tinyClosed = 0 := by
 
 end Examples
 end MetaPrinciple
-
-

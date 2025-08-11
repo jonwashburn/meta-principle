@@ -17,5 +17,3 @@ open MetaPrinciple
 #print axioms MetaPrinciple.T2_atomicity
 #print axioms MetaPrinciple.T3_continuity
 #print axioms MetaPrinciple.LatticeFree.eight_tick_min
-
-

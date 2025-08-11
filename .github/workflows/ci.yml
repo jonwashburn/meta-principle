@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, lattice-free-minimality ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install elan
+      run: |
+        curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y
+        echo "$HOME/.elan/bin" >> $GITHUB_PATH
+    
+    - name: Get cache
+      run: lake exe cache get || true
+    
+    - name: Build library
+      run: lake build
+    
+    - name: Build monolith
+      run: lake env lean --make docs/monolith/MonolithCore.lean
+    
+    - name: Axiom audit
+      run: lake env lean MetaPrinciple/AxiomAudit.lean
+    
+    - name: Run tests (if present)
+      run: |
+        if [ -f "MetaPrinciple/Tests.lean" ]; then
+          lake env lean MetaPrinciple/Tests.lean
+        fi
