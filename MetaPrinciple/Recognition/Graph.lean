@@ -41,7 +41,7 @@ lemma cube3_vertices : Fintype.card CubeVertex = 8 := by
   simp
 
 /-- Each vertex in the 3-cube has exactly 3 neighbors. -/
-lemma cube3_regular : ∀ v : CubeVertex, 
+lemma cube3_regular : ∀ v : CubeVertex,
   Fintype.card {w : CubeVertex // Cube3.Adj v w} = 3 := by
   intro v
   -- Each bit position can be flipped independently
@@ -59,12 +59,12 @@ def grayCode3 : Fin 8 → CubeVertex
 | 7 => ⟨[false, false, true], rfl⟩
 
 /-- Gray code gives adjacent vertices. -/
-lemma grayCode3_adjacent (i : Fin 8) : 
+lemma grayCode3_adjacent (i : Fin 8) :
   Cube3.Adj (grayCode3 i) (grayCode3 ((i + 1) % 8)) := by
   fin_cases i <;> simp [grayCode3, Cube3, hammingDist] <;> sorry
 
 /-- Gray code is a Hamiltonian cycle. -/
-theorem grayCode3_hamiltonian : 
+theorem grayCode3_hamiltonian :
   (∀ i : Fin 8, Cube3.Adj (grayCode3 i) (grayCode3 ((i + 1) % 8))) ∧
   (∀ v : CubeVertex, ∃ i : Fin 8, grayCode3 i = v) := by
   constructor
@@ -102,8 +102,8 @@ def cube8Walk : LedgerCompatibleWalk CubeAsVoxel where
     sorry
 
 /-- The 8-tick walk is indeed minimal. -/
-theorem cube_eight_minimal : 
-  cube8Walk.period = 8 ∧ 
+theorem cube_eight_minimal :
+  cube8Walk.period = 8 ∧
   ∀ w : LedgerCompatibleWalk CubeAsVoxel, 8 ≤ w.period := by
   constructor
   · rfl

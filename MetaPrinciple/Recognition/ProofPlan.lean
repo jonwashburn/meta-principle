@@ -17,11 +17,11 @@ open Recognition
 
 /-- Construction of a ledger using ℤ costs. -/
 def constructLedger (M : RecognitionStructure) : Ledger M ℤ where
-  iota := fun u => 
+  iota := fun u =>
     -- Sum of incoming recognitions
     sorry
   kappa := fun u =>
-    -- Sum of outgoing recognitions  
+    -- Sum of outgoing recognitions
     sorry
   delta := 1
   delta_pos := by norm_num
@@ -45,7 +45,7 @@ theorem ledger_exists_proof :
 /-! ## 2. Cost Uniqueness Proof Strategy -/
 
 /-- Laurent expansion for symmetric functions. -/
-lemma symmetric_laurent {F : ℝ → ℝ} 
+lemma symmetric_laurent {F : ℝ → ℝ}
   (hsym : ∀ x ≠ 0, F x = F x⁻¹) :
   ∃ (a : ℕ → ℝ), ∀ x > 0, F x = ∑' n, a n * (x^n + x^(-n : ℤ)) := by
   sorry -- Would use power series theory
@@ -121,7 +121,7 @@ theorem k_equals_one_proof :
 /-! ## 5. Eight-Tick Minimality Proof Strategy -/
 
 /-- Parity argument for minimal period. -/
-lemma parity_forces_eight {X : Voxel} 
+lemma parity_forces_eight {X : Voxel}
   (w : LedgerCompatibleWalk X) :
   8 ∣ w.period := by
   -- Each vertex has 3 neighbors (odd degree)
