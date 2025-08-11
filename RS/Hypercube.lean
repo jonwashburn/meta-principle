@@ -29,7 +29,7 @@ def grayCode : Fin 8 → V
 | 7 => (1, 0, 0)  -- 100
 
 /-- Gray code gives adjacent vertices. -/
-lemma grayCode_adjacent (i : Fin 8) : 
+lemma grayCode_adjacent (i : Fin 8) :
   CubeGraph.Adj (grayCode i) (grayCode ((i + 1) % 8)) := by
   fin_cases i <;> simp [grayCode, CubeGraph, Adj] <;> tauto
 

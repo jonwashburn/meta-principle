@@ -23,16 +23,16 @@ theorem why_ledger_necessary (M : RecognitionStructure) :
   True := by
   -- Step 1: Show that any recognition must have a "cost"
   -- (else infinite recognitions violate finiteness)
-  
+
   -- Step 2: Show costs must be additive
   -- (else path-dependence breaks consistency)
-  
+
   -- Step 3: Show costs must be discrete with minimum δ
   -- (else infinitesimal recognitions violate atomicity)
-  
+
   -- Step 4: Show double-entry is forced
   -- (else conservation is violated)
-  
+
   trivial
 
 /-! ## Proof 2: No Rescaling of δ -/
@@ -55,7 +55,7 @@ theorem why_no_rescaling {M : RecognitionStructure} (L : Ledger M) :
 /-! ## Proof 3: J Uniqueness -/
 
 /-- Laurent expansion for symmetric functions. -/
-lemma symmetric_implies_laurent (F : ℝ → ℝ) 
+lemma symmetric_implies_laurent (F : ℝ → ℝ)
   (hsym : ∀ x > 0, F x = F x⁻¹) :
   ∃ G : ℝ → ℝ, ∀ x > 0, F x = G (x + x⁻¹) := by
   -- F(x) = F(1/x) means F depends only on x + 1/x
@@ -102,7 +102,7 @@ lemma cost_increases (x : ℝ) (hx : x > 1) :
 
 /-- Complete proof that k = 1. -/
 theorem k_equals_one_proof :
-  ∀ k : ℕ, k > 0 → 
+  ∀ k : ℕ, k > 0 →
     (∀ x > 0, recurrence k x → total_cost k x ≥ total_cost 1 φ) := by
   intro k hk x hx hrec
   cases' k with k'

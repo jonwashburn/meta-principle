@@ -45,21 +45,21 @@ section Applications
 variable {M : RecognitionStructure}
 
 /-- Any ledger has unique structure up to isomorphism. -/
-example : ∃ (L : Ledger M), ∀ L', LedgerIso L L' := 
+example : ∃ (L : Ledger M), ∀ L', LedgerIso L L' :=
   ledger_necessity_unique M
 
 /-- J is the unique admissible cost functional. -/
-example (F : ℝ → ℝ) (hF : AdmissibleCost F) (x : ℝ) (hx : 0 < x) : 
-  F x = J x := 
+example (F : ℝ → ℝ) (hF : AdmissibleCost F) (x : ℝ) (hx : 0 < x) :
+  F x = J x :=
   unique_cost_functional hF hx
 
 /-- k must equal 1 for any admissible cost. -/
-example (F : ℝ → ℝ) (hF : AdmissibleCost F) (k : ℕ) (hk : k ≥ 1) : 
-  k = 1 := 
+example (F : ℝ → ℝ) (hF : AdmissibleCost F) (k : ℕ) (hk : k ≥ 1) :
+  k = 1 :=
   k_eq_one hF hk
 
 /-- The eight-tick walk is minimal. -/
-example (w : EightTick.Walk) : w.T = 8 := 
+example (w : EightTick.Walk) : w.T = 8 :=
   eight_tick_minimal w
 
 end Applications
@@ -67,7 +67,7 @@ end Applications
 /-! ## Sanity Checks for Core Types -/
 
 #check RecognitionStructure
-#check Ledger  
+#check Ledger
 #check AdmissibleCost
 #check J
 #check φ

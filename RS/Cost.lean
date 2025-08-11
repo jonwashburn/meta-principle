@@ -12,7 +12,7 @@ open RS Real
 /-! ## Laurent Expansion Strategy -/
 
 /-- Any symmetric function on ℝ₊ admits a Laurent-like expansion in x + x⁻¹. -/
-lemma symmetric_laurent_expansion {F : ℝ → ℝ} 
+lemma symmetric_laurent_expansion {F : ℝ → ℝ}
   (hsym : ∀ {x : ℝ}, 0 < x → F x = F x⁻¹) :
   ∃ (G : ℝ → ℝ), ∀ {x : ℝ}, 0 < x → F x = G (x + x⁻¹) := by
   -- Define G(t) = F(x) where x is chosen so that x + x⁻¹ = t
@@ -62,7 +62,7 @@ def laurentSeries (a : ℕ → ℝ) (x : ℝ) : ℝ :=
   ∑' n : ℕ, a n * (x^n + x^(-(n:ℤ)))
 
 /-- Growth rate analysis kills higher-order terms. -/
-lemma growth_analysis {a : ℕ → ℝ} 
+lemma growth_analysis {a : ℕ → ℝ}
   (hconv : ∀ x > 0, Summable (fun n => a n * (x^n + x^(-(n:ℤ)))))
   (hbound : ∃ K > 0, ∀ x > 0, laurentSeries a x ≤ K * (x + x⁻¹)) :
   ∀ n ≥ 2, a n = 0 := by

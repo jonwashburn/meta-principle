@@ -80,7 +80,7 @@ theorem card_eq_eight (S : StateSpace) (P : ParityMap S) :
 lemma eight_min {T : ℕ} (hT : T < 8) :
   ¬∃ f : Fin T → V_real, Function.Surjective f := by
   intro ⟨f, hf⟩
-  have : Fintype.card V_real ≤ Fintype.card (Fin T) := 
+  have : Fintype.card V_real ≤ Fintype.card (Fin T) :=
     Fintype.card_le_of_surjective f hf
   rw [card_V_real, Fintype.card_fin] at this
   omega
@@ -115,7 +115,7 @@ lemma gray_surjective : Function.Surjective gray_code := by
   sorry -- Mechanical but straightforward
 
 /-- There exists a pass of length exactly 8. -/
-theorem exists_period_eight : 
+theorem exists_period_eight :
   ∃ f : Fin 8 → V_real, Function.Surjective f :=
   ⟨gray_code, gray_surjective⟩
 
@@ -162,9 +162,9 @@ theorem exactly_eight_ticks (S : StateSpace) (P : ParityMap S) :
 
 /-- Corollary: The minimal complete period is exactly 8. -/
 theorem minimal_period_is_eight :
-  (∃ T, ∃ f : Fin T → V_real, Function.Surjective f ∧ 
+  (∃ T, ∃ f : Fin T → V_real, Function.Surjective f ∧
     ∀ T' < T, ¬∃ g : Fin T' → V_real, Function.Surjective g) ∧
-  (∀ T, (∃ f : Fin T → V_real, Function.Surjective f ∧ 
+  (∀ T, (∃ f : Fin T → V_real, Function.Surjective f ∧
     ∀ T' < T, ¬∃ g : Fin T' → V_real, Function.Surjective g) → T = 8) := by
   constructor
   · use 8, gray_code

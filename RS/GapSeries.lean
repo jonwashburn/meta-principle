@@ -42,7 +42,7 @@ lemma gap_tail_bound (N : ℕ) :
   sorry
 
 /-- The gap series at z=1 gives log φ. -/
-theorem gap_normalization : ∑' m : ℕ, gapCoeff m = Real.log φ := 
+theorem gap_normalization : ∑' m : ℕ, gapCoeff m = Real.log φ :=
   gap_sum_at_one
 
 /-! ## Connection to Ledger Corrections -/

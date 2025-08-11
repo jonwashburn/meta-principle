@@ -6,7 +6,7 @@ This file fixes the *signatures* of the main theorems so downstream code is stab
 Replace axioms with proofs incrementally without breaking dependencies.
 
 References correspond to manuscript sections:
-- §2.1: Recognition Structure & Meta-Principle  
+- §2.1: Recognition Structure & Meta-Principle
 - §2.2: Ledger-Necessity (strong form)
 - §2.3: Unique cost functional J
 - §3: Self-similarity & k=1
@@ -161,7 +161,7 @@ def recur (k : ℕ) (x : ℝ) : ℝ := 1 + k/x
 /-- Countability ⇒ k is an integer and cost-minimization picks k=1.
     Mirrors Lemma "Discrete decomposition forces integer k" and Thm. "k=1". -/
 axiom k_eq_one :
-  ∀ {F : ℝ → ℝ}, AdmissibleCost F → 
+  ∀ {F : ℝ → ℝ}, AdmissibleCost F →
   ∀ {k : ℕ}, k ≥ 1 → k = 1
 
 /-! ## 5. Eight-Tick Cycle -/

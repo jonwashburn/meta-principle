@@ -22,7 +22,7 @@ namespace Indisputable
 /-- Nothing is the empty type. -/
 abbrev Nothing := Empty
 
-/-- The meta-principle: Nothing cannot recognize itself. 
+/-- The meta-principle: Nothing cannot recognize itself.
     This is a tautology - Empty has no inhabitants. -/
 theorem MetaPrinciple : ¬∃ (r : Nothing × Nothing), True := by
   intro ⟨r, _⟩
@@ -52,18 +52,18 @@ structure Ledger (M : RecognitionStructure) where
   Cost : Type*
   [order : LinearOrder Cost]
   [add : AddCommGroup Cost]
-  
+
   -- Every entity has debit/credit columns
   debit : M.U → Cost
   credit : M.U → Cost
-  
+
   -- The atomic unit (must exist for discreteness)
   δ : Cost
   δ_pos : 0 < δ
-  
+
   -- Conservation: Recognition transfers exactly δ
   transfer : ∀ a b, M.R a b → credit b - debit a = δ
-  
+
   -- No free lunch: Empty has zero balance
   empty_zero : debit M.empty = 0 ∧ credit M.empty = 0
 
@@ -134,8 +134,8 @@ theorem φ_satisfies : recurrence 1 φ := by
 
 /-- CLAIM: k must be 1 from cost minimization.
     The total cost ∑J(xᵢ) is minimized when k=1. -/
-axiom k_must_be_one : 
-  ∀ k : ℕ, k > 0 → (∀ x > 0, recurrence k x → 
+axiom k_must_be_one :
+  ∀ k : ℕ, k > 0 → (∀ x > 0, recurrence k x →
     ∑ i : Fin k, J (x^(1/k:ℝ)) ≥ ∑ i : Fin 1, J φ)
 
 /-! ## Step 6: Eight-Tick from Cube Topology -/
@@ -173,7 +173,7 @@ def gray_code : Fin 8 → Cube
 | 6 => (1, 0, 1)
 | 7 => (1, 0, 0)
 
-theorem gray_code_is_eight_cycle : 
+theorem gray_code_is_eight_cycle :
   ∃ w : CompleteWalk, w.period = 8 := by
   sorry -- Constructive proof using gray_code
 
