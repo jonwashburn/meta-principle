@@ -27,11 +27,11 @@ axiom voxel_seams : ℕ := 16
 axiom pyramid_count : ℕ := 102
 
 /-- **Assumption**: Curvature closure condition. -/
-axiom curvature_closure : ℝ → ℝ := fun α => 
+axiom curvature_closure : ℝ → ℝ := fun α =>
   (pyramid_count + 1 : ℝ) / (pyramid_count * Real.pi^5) - α
 
 /-- **Calibration**: Map to SI fine structure constant. -/
-noncomputable def alpha_predicted : ℝ := 
+noncomputable def alpha_predicted : ℝ :=
   (pyramid_count + 1 : ℝ) / (pyramid_count * Real.pi^5)
 
 /-- **Claim**: Nine-digit agreement with measured value. -/
@@ -39,7 +39,7 @@ example : |alpha_predicted - 1/137.035999084| < 1e-9 := by
   sorry -- Numerical verification
 
 /-- **Note**: This depends on the voxel-seam model, not derived from ledger alone. -/
-def model_dependent : String := 
+def model_dependent : String :=
   "This prediction requires the voxel Regge model as an additional assumption"
 
 end MetaPrinciple.Applications

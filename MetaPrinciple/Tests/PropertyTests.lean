@@ -37,7 +37,7 @@ def test_J_symmetry : IO Unit := do
 
 /-- Test: Gap series partial sums bracket ln(φ). -/
 def test_gap_bracketing (N : ℕ) : Prop :=
-  let partial := (Finset.range N).sum (fun m => 
+  let partial := (Finset.range N).sum (fun m =>
     (-1 : ℝ)^(m + 1) / (m * goldenRatio^m))
   let target := log goldenRatio
   if N % 2 = 0 then
@@ -57,9 +57,9 @@ example : totalCost 1 < totalCost 2 := by
   sorry -- Numerical verification
 
 /-- Test: Tail bound for gap series at N = 10. -/
-example : 
+example :
   let N := 10
-  let partial := (Finset.range N).sum (fun m => 
+  let partial := (Finset.range N).sum (fun m =>
     (-1 : ℝ)^(m + 1) / (m * goldenRatio^m))
   let exact := log goldenRatio
   abs (partial - exact) < 1e-6 := by

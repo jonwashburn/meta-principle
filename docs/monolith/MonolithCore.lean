@@ -22,7 +22,7 @@ Includes:
 See the modular implementation in:
 - `Core/LedgerStrict.lean` - Non-rescalable ledger with structure preservation
 - `Core/CostFunctional.lean` - J(x) uniqueness via Laurent basis
-- `Core/AtomicScheduler.lean` - k ∈ ℕ constraint and k=1 optimality  
+- `Core/AtomicScheduler.lean` - k ∈ ℕ constraint and k=1 optimality
 - `Core/GapSeries.lean` - Gap series = ln(φ) with tail bounds
 
 ## Tags

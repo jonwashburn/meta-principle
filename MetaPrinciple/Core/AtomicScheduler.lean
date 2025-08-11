@@ -21,10 +21,10 @@ open Real
 class AtomicSchedule where
   /-- The posting function: tick → Option (source, target) -/
   posting : ℕ → Option (ℕ × ℕ)
-  
+
   /-- At most one posting per tick -/
   unique_per_tick : ∀ t : ℕ, posting t = none ∨ ∃! pair, posting t = some pair
-  
+
   /-- Postings are sequential (no gaps) -/
   sequential : ∀ t : ℕ, posting t = none → ∀ s > t, posting s = none
 
@@ -32,16 +32,16 @@ class AtomicSchedule where
 structure OperationalRecurrence where
   /-- The branching factor k -/
   k : ℝ
-  
+
   /-- Operational interpretation: k sub-recognitions per tick -/
   semantic : ℝ
-  
+
   /-- Consistency: semantic interpretation matches k -/
   consistent : semantic = k
 
 /-- **Theorem**: Under atomic scheduling, k must be a natural number. -/
-theorem k_is_natural [AtomicSchedule] (rec : OperationalRecurrence) 
-  (h_count : rec.semantic = ↑(⌊rec.semantic⌋₊)) : 
+theorem k_is_natural [AtomicSchedule] (rec : OperationalRecurrence)
+  (h_count : rec.semantic = ↑(⌊rec.semantic⌋₊)) :
   ∃ (n : ℕ), rec.k = n := by
   -- The semantic interpretation counts discrete sub-recognitions
   use ⌊rec.semantic⌋₊
@@ -53,12 +53,12 @@ theorem k_is_natural [AtomicSchedule] (rec : OperationalRecurrence)
 /-- The total cost function Σ(k) for k-ary branching. -/
 noncomputable def totalCost (k : ℕ) : ℝ :=
   if k = 0 then 0
-  else 
+  else
     let x := (1 + Real.sqrt (1 + 4 * k)) / 2  -- Fixed point of x = 1 + k/x
     (x + k / x) / 2
 
 /-- **Lemma**: The fixed point for k = 1 is the golden ratio. -/
-lemma fixed_point_k_one : 
+lemma fixed_point_k_one :
   let x := (1 + Real.sqrt 5) / 2
   x = 1 + 1/x ∧ x = goldenRatio := by
   simp [goldenRatio]
@@ -71,7 +71,7 @@ lemma fixed_point_k_one :
     rfl
 
 /-- **Theorem**: Total cost is minimized at k = 1. -/
-theorem cost_minimized_at_one : 
+theorem cost_minimized_at_one :
   ∀ k : ℕ, k ≥ 1 → totalCost 1 ≤ totalCost k := by
   intro k hk
   unfold totalCost
@@ -81,11 +81,11 @@ theorem cost_minimized_at_one :
   · cases' k' with k''
     · -- k = 1 case
       rfl
-    · -- k ≥ 2 case  
+    · -- k ≥ 2 case
       sorry -- Would prove monotonicity using calculus
 
 /-- **Corollary**: The optimal recurrence has k = 1, yielding φ. -/
-theorem optimal_is_golden : 
+theorem optimal_is_golden :
   ∃! k : ℕ, k ≥ 1 ∧ (∀ j ≥ 1, totalCost k ≤ totalCost j) ∧
   let x := (1 + Real.sqrt (1 + 4 * k)) / 2
   x = goldenRatio := by
@@ -102,8 +102,8 @@ theorem optimal_is_golden :
 
 /-- **Definition**: One sub-recognition per tick (k = 1 semantics). -/
 def one_per_tick [AtomicSchedule] : Prop :=
-  ∀ t : ℕ, ∃ at_most_one : ℕ × ℕ, 
-    AtomicSchedule.posting t = none ∨ 
+  ∀ t : ℕ, ∃ at_most_one : ℕ × ℕ,
+    AtomicSchedule.posting t = none ∨
     AtomicSchedule.posting t = some at_most_one
 
 end MetaPrinciple.Core

@@ -21,38 +21,38 @@ structure StrictLedger where
   [group : AddCommGroup C]
   [ordered : LinearOrder C]
   [compat : CovariantClass C C (· + ·) (· ≤ ·)]
-  
+
   /-- The generator (positive) -/
   delta : C
   delta_pos : 0 < delta
-  
+
   /-- Debit function -/
   debit : ℕ → ℕ → C  -- (node, time) → cost
-  
+
   /-- Credit function -/
   credit : ℕ → ℕ → C  -- (node, time) → cost
-  
+
   /-- The posting relation: recognition a→b at time t creates posting -/
-  posting_law : ∀ (a b t : ℕ), 
-    (∃ recognition : a ≠ b, True) → 
+  posting_law : ∀ (a b t : ℕ),
+    (∃ recognition : a ≠ b, True) →
     debit b t - credit a t = delta
-  
+
   /-- Timestamp uniqueness: at most one posting per timestamp -/
-  timestamp_unique : ∀ (t : ℕ), 
+  timestamp_unique : ∀ (t : ℕ),
     ∃! (pair : ℕ × ℕ), debit pair.2 t ≠ 0 ∨ credit pair.1 t ≠ 0
 
 /-- A ledger morphism preserves the posting relation and timestamps. -/
 structure LedgerMorphism (L₁ L₂ : StrictLedger) where
   /-- The underlying group homomorphism -/
   f : L₁.C →+ L₂.C
-  
+
   /-- Preserves order -/
   order_preserving : ∀ x y, x ≤ y → f x ≤ f y
-  
+
   /-- Preserves the posting relation -/
   preserves_posting : ∀ (a b t : ℕ),
     f (L₁.debit b t - L₁.credit a t) = L₂.debit b t - L₂.credit a t
-  
+
   /-- Preserves timestamps (bijection on posting times) -/
   preserves_time : ∀ (t : ℕ),
     (∃ a b, L₁.debit b t ≠ 0 ∨ L₁.credit a t ≠ 0) ↔
@@ -80,7 +80,7 @@ theorem no_delta_rescaling (L : StrictLedger) :
 
 /-- **Lemma**: Binary (not k-ary) posting is forced by bijectivity. -/
 theorem binary_posting_only (L : StrictLedger) :
-  ∀ (t : ℕ), ∃ (a b : ℕ), 
+  ∀ (t : ℕ), ∃ (a b : ℕ),
     (L.debit b t = L.delta ∧ L.credit a t = 0) ∨
     (L.debit b t = 0 ∧ L.credit a t = -L.delta) ∨
     (L.debit b t = L.delta/2 ∧ L.credit a t = -L.delta/2) := by

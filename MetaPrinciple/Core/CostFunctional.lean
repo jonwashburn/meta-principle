@@ -23,10 +23,10 @@ noncomputable def J : ℝ → ℝ := fun x => (x + 1/x) / 2
 /-- **Axiom**: Symmetry requirement for any valid cost functional. -/
 class SymmetricCost (f : ℝ → ℝ) : Prop where
   symmetry : ∀ x > 0, f x = f (1/x)
-  
+
 /-- **Axiom**: Analyticity requirement. -/
 class AnalyticCost (f : ℝ → ℝ) : Prop where
-  analytic : ∀ x > 0, ∃ (ε : ℝ) (hε : ε > 0), 
+  analytic : ∀ x > 0, ∃ (ε : ℝ) (hε : ε > 0),
     ∀ y ∈ Set.Ioo (x - ε) (x + ε), ∃ (series : ℕ → ℝ),
       f y = ∑' n, series n * (y - x) ^ n
 
@@ -54,7 +54,7 @@ lemma laurent_structure {f : ℝ → ℝ} [SymmetricCost f] [AnalyticCost f] :
   sorry -- Would prove using symmetry to equate coefficients
 
 /-- **Theorem**: The unique cost functional satisfying all requirements is J. -/
-theorem cost_functional_unique (f : ℝ → ℝ) 
+theorem cost_functional_unique (f : ℝ → ℝ)
   [SymmetricCost f] [AnalyticCost f] [NormalizedCost f]
   (h_bound : ∀ x > 0, f x ≤ (1/2) * (x + 1/x)) :
   f = J := by

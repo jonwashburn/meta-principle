@@ -39,7 +39,7 @@ theorem gap_series_closed_form : gapSeries = log goldenRatio := by
   sorry -- Would use Mathlib's log series theorem
 
 /-- **Lemma**: Absolute convergence of the gap series. -/
-lemma gap_series_abs_convergent : 
+lemma gap_series_abs_convergent :
   Summable (fun m : ℕ => |(-1 : ℝ)^(m + 1) / (m * goldenRatio^m)|) := by
   -- |(-1)^(m+1)| = 1, so we need ∑ 1/(m φ^m) convergent
   simp [abs_div, abs_pow, abs_neg, abs_one]
@@ -48,7 +48,7 @@ lemma gap_series_abs_convergent :
 
 /-- **Theorem**: Explicit tail bound for truncation at N terms. -/
 theorem gap_series_tail_bound (N : ℕ) (hN : N ≥ 1) :
-  |gapSeries - ∑ m in Finset.range N, (-1 : ℝ)^(m + 1) / (m * goldenRatio^m)| 
+  |gapSeries - ∑ m in Finset.range N, (-1 : ℝ)^(m + 1) / (m * goldenRatio^m)|
   ≤ 1 / (N * goldenRatio^N * (goldenRatio - 1)) := by
   -- The tail is bounded by a geometric series
   have tail := gapSeries - ∑ m in Finset.range N, (-1)^(m + 1) / (m * goldenRatio^m)
@@ -56,8 +56,8 @@ theorem gap_series_tail_bound (N : ℕ) (hN : N ≥ 1) :
   sorry
 
 /-- **Corollary**: For N = 10, the error is less than 10^(-6). -/
-example : 
-  |gapSeries - ∑ m in Finset.range 10, (-1 : ℝ)^(m + 1) / (m * goldenRatio^m)| 
+example :
+  |gapSeries - ∑ m in Finset.range 10, (-1 : ℝ)^(m + 1) / (m * goldenRatio^m)|
   < 1e-6 := by
   have bound := gap_series_tail_bound 10 (by norm_num : 10 ≥ 1)
   calc |gapSeries - ∑ m in Finset.range 10, (-1)^(m + 1) / (m * goldenRatio^m)|
