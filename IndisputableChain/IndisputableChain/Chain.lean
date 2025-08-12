@@ -250,7 +250,7 @@ def constructLedger (M : RecognitionStructure) : Ledger M where
     intro a b hab
     -- The conservation law states: intake b - output a = δ = 1
     -- We need to show the edge (a,b) contributes exactly this difference
-    sorry -- This requires showing the edge counting works correctly
+    sorry
   empty_neutral := by
     -- No self-recognition at empty; counts can be zero if no edges
     -- We accept zero as neutral baseline
@@ -373,10 +373,10 @@ theorem J_works : CostRequirements J where
     unfold J Real.cosh
     simp [Real.exp_neg]
     ring
-
-  lemma J_nonneg {x : ℝ} (hx : 0 < x) : 0 ≤ J x := by
+  
+lemma J_nonneg {x : ℝ} (hx : 0 < x) : 0 ≤ J x := by
   unfold J
-    have : 2 ≤ x + x⁻¹ := two_le_add_inv_add x hx
+  have : 2 ≤ x + x⁻¹ := two_le_add_inv_add x hx
   linarith
 
 lemma J_min_at_one : J 1 = 0 := by unfold J; simp
@@ -432,21 +432,43 @@ theorem k_equals_one : ∀ k ≥ 2,
   intro k hk
   -- We show that the cost grows strictly for k ≥ 2
   -- This uses strict convexity of J in log scale
-  have φ_pos : 0 < φ := by
-    unfold φ
-    have : 0 < Real.sqrt 5 := Real.sqrt_pos.mpr (by norm_num : (0:ℝ) < 5)
-    linarith
+  have φ_pos : 0 < φ := (φ_is_fixed_point).2
   have φ_gt_one : 1 < φ := by
     unfold φ
-    have : 2 < Real.sqrt 5 := by
-      have : 4 < 5 := by norm_num
-      have : Real.sqrt 4 < Real.sqrt 5 := Real.sqrt_lt_sqrt (by norm_num) this
-      simpa using this
+    have : Real.sqrt 1 < Real.sqrt 5 := by
+      -- sqrt is strictly increasing on nonnegatives
+      have : (1:ℝ) < 5 := by norm_num
+      simpa using Real.sqrt_lt_sqrt (by norm_num : (0:ℝ) ≤ 1) this
+    have : 1 < Real.sqrt 5 := by simpa using this
     linarith
-  -- The key insight: J is strictly convex, so averaging increases cost
-  -- For k=2: J(√φ) + J(√φ) > 2·J(φ) by strict convexity
-  -- General k: k·J(φ^(1/k)) > J(φ) by k-fold strict Jensen
-  sorry
+  -- Set t = log φ
+  set t : ℝ := Real.log φ
+  have ht_pos : 0 < t := by
+    have : 1 < φ := φ_gt_one
+    -- 0 < log φ ↔ 1 < φ (since φ > 0)
+    simpa [t] using (Real.log_pos_iff.mpr this)
+  have ht_ne : t ≠ 0 := ne_of_gt ht_pos
+  -- Rewrite J at positive arguments via cosh(log x) - 1
+  have J_cosh (x : ℝ) (hx : 0 < x) : J x = Real.cosh (Real.log x) - 1 := by
+    unfold J
+    have : Real.cosh (Real.log x) = (x + x⁻¹) / 2 := by
+      unfold Real.cosh
+      simp [Real.exp_log hx, Real.exp_neg]
+    simpa [this]
+  have J_phi : J φ = Real.cosh t - 1 := by
+    simpa [t] using J_cosh φ φ_pos
+  have hpow_pos : 0 < φ ^ (1 / k : ℝ) := Real.rpow_pos_of_pos φ_pos _
+  have log_pow : Real.log (φ ^ (1 / k : ℝ)) = (1 / k : ℝ) * Real.log φ := by
+    simpa [t] using Real.log_rpow φ_pos (1 / k : ℝ)
+  have J_pow : J (φ ^ (1 / k : ℝ)) = Real.cosh (t / k) - 1 := by
+    have := J_cosh (φ ^ (1 / k : ℝ)) hpow_pos
+    -- simplify log power and scalar division
+    simpa [t, log_pow, one_div, mul_comm, mul_left_comm, mul_assoc] using this
+  -- Apply strict Jensen for cosh
+  have hstrict := RS.cosh_avg_strict (k := k) hk (by simpa [t] using ne_of_gt ht_pos)
+  -- Conclude
+  have : (k : ℝ) * (Real.cosh (t / k) - 1) < Real.cosh t - 1 := hstrict
+  simpa [J_pow, J_phi] using this
 
 /-! ## 6. UNIQUE PERIOD: 8 is Forced -/
 
