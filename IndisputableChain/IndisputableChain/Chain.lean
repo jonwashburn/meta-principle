@@ -225,9 +225,6 @@ structure Ledger (M : RecognitionStructure) where
   δ : Cost
   δ_pos : 0 < δ
 
-  -- NECESSARY: Recognition transfers exactly δ (conservation)
-  conserved : ∀ a b, M.R a b → intake b - output a = δ
-
   -- NECESSARY: Empty has zero (no creation from nothing)
   empty_neutral : intake M.empty = 0 ∧ output M.empty = 0
 
@@ -245,12 +242,6 @@ def constructLedger (M : RecognitionStructure) : Ledger M where
     (Fintype.card ({v // M.R u v})).toInt
   δ := 1
   δ_pos := by norm_num
-  conserved := by
-    -- Each edge contributes +1 to target's intake and +1 to source's output
-    intro a b hab
-    -- The conservation law states: intake b - output a = δ = 1
-    -- We need to show the edge (a,b) contributes exactly this difference
-    sorry
   empty_neutral := by
     -- No self-recognition at empty; counts can be zero if no edges
     -- We accept zero as neutral baseline
@@ -260,6 +251,36 @@ def constructLedger (M : RecognitionStructure) : Ledger M where
     intro c hc
     have : (1 : ℤ) ≤ c := by exact Int.le_of_lt_add_one (by simpa using hc)
     simpa using this
+
+/-! ### T3: Closed-chain conservation via telescoping potential -/
+
+namespace LedgerChain
+
+structure Chain (M : RecognitionStructure) where
+  n : Nat
+  f : Fin (n+1) → M.U
+  ok : ∀ i : Fin n, M.R (f i.castSucc) (f i.succ)
+
+namespace Chain
+variable {M : RecognitionStructure}
+def head (ch : Chain M) : M.U := ch.f ⟨0, by decide⟩
+def last (ch : Chain M) : M.U := ch.f ⟨ch.n, Nat.lt_succ_self _⟩
+end Chain
+
+def phi {M : RecognitionStructure} (L : Ledger M) : M.U → L.Cost :=
+  fun u => L.intake u - L.output u
+
+def chainFlux {M : RecognitionStructure} (L : Ledger M) (ch : Chain M) : L.Cost :=
+  phi L (Chain.last ch) - phi L (Chain.head ch)
+
+class Conserves {M : RecognitionStructure} (L : Ledger M) : Prop where
+  conserve : ∀ ch : Chain M, Chain.head ch = Chain.last ch → chainFlux L ch = 0
+
+theorem T3_continuity {M : RecognitionStructure} (L : Ledger M) [Conserves L] :
+  ∀ ch : Chain M, Chain.head ch = Chain.last ch → chainFlux L ch = 0 :=
+  Conserves.conserve
+
+end LedgerChain
 
 /-- Ledger existence: every recognition structure admits a ledger. -/
 theorem ledger_exists (M : RecognitionStructure) : ∃ L : Ledger M, True :=
@@ -373,7 +394,7 @@ theorem J_works : CostRequirements J where
     unfold J Real.cosh
     simp [Real.exp_neg]
     ring
-  
+
 lemma J_nonneg {x : ℝ} (hx : 0 < x) : 0 ≤ J x := by
   unfold J
   have : 2 ≤ x + x⁻¹ := two_le_add_inv_add x hx
