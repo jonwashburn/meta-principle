@@ -1,3 +1,13 @@
+import Mathlib.Data.Real.Basic
+import Mathlib.Analysis.SpecialFunctions.Log.Basic
+import Mathlib.Analysis.Convex.SpecificFunctions.Basic
+import Mathlib.Analysis.SpecialFunctions.ExpDeriv
+import «IndisputableChain».Hyperbolic.CoshIneq
+import «IndisputableChain».Graph.DegreeSum
+import Mathlib.Data.Fintype.Basic
+import Mathlib.Algebra.Order.Group.OrderIso
+import Mathlib.Tactic
+
 /-!
 # The Indisputable Chain: Recognition Science from Pure Logic
 
@@ -17,15 +27,30 @@ Status:
 ✓ All other theorems: Fully proven
 -/
 
-import Mathlib.Data.Real.Basic
-import Mathlib.Analysis.SpecialFunctions.Log.Basic
-import Mathlib.Analysis.Convex.SpecificFunctions.Basic
-import Mathlib.Analysis.SpecialFunctions.ExpDeriv
-import Mathlib.Data.Fintype.Basic
-import Mathlib.Algebra.Order.Group.OrderIso
-import Mathlib.Tactic
-
 namespace IndisputableChain
+
+-- Basic AM-GM style bounds used below, avoiding fragile name dependencies.
+lemma two_le_add_inv_add (x : ℝ) (hx : 0 < x) : 2 ≤ x + x⁻¹ := by
+  have hxne : (x : ℝ) ≠ 0 := ne_of_gt hx
+  have hsq : 0 ≤ (x - 1) ^ 2 := by exact sq_nonneg (x - 1)
+  have : 0 ≤ ((x - 1) ^ 2) / x := by exact div_nonneg hsq (le_of_lt hx)
+  have hiden : ((x - 1) ^ 2) / x = x + x⁻¹ - 2 := by
+    field_simp [hxne]
+    ring
+  have : 0 ≤ x + x⁻¹ - 2 := by simpa [hiden]
+  linarith
+
+lemma two_lt_add_inv_add_of_ne_one (x : ℝ) (hx : 0 < x) (hne : x ≠ 1) : 2 < x + x⁻¹ := by
+  have hxne : (x : ℝ) ≠ 0 := ne_of_gt hx
+  have hsq : 0 < (x - 1) ^ 2 := by
+    have : x - 1 ≠ 0 := sub_ne_zero.mpr (by simpa [ne_comm] using hne)
+    exact pow_two_pos_of_ne_zero (x - 1) this
+  have : 0 < ((x - 1) ^ 2) / x := by exact div_pos hsq hx
+  have hiden : ((x - 1) ^ 2) / x = x + x⁻¹ - 2 := by
+    field_simp [hxne]
+    ring
+  have : 0 < x + x⁻¹ - 2 := by simpa [hiden]
+  linarith
 
 /-! # Cost Uniqueness (Proven)
 
@@ -46,7 +71,9 @@ lemma symmetric_as_sum_function {F : ℝ → ℝ} (hSym : ∀ x > 0, F x = F x�
       F 1
   refine ⟨G, ?_⟩
   intro x hx
-  have tdef : (x + x⁻¹) ≥ 2 := by exact Real.two_mul_one_le_x_add_inv_x hx.le
+  have tdef : (x + x⁻¹) ≥ 2 := by
+    have := two_le_add_inv_add x hx
+    simpa [le_of_lt] using this
   simp [G, tdef]
   -- Any other positive solution is 1/x; symmetry ensures well-definedness
   -- Therefore F x = G (x + 1/x)
@@ -66,18 +93,14 @@ lemma bounded_symmetric_is_linear {F : ℝ → ℝ}
   have even_f : ∀ t, f t = f (-t) := by
     intro t
     unfold f
-    exact hSym (Real.exp t) (Real.exp_pos t)
+    simpa [Real.exp_neg] using hSym (Real.exp t) (Real.exp_pos t)
 
   -- f is convex (given as hConv)
   -- f is bounded: f(t) ≤ K * (e^t + e^{-t}) = K * 2 * cosh(t)
-  have bound_f : ∀ t, f t ≤ K * 2 * Real.cosh t := by
+  have bound_f : ∀ t, f t ≤ K * (Real.exp t + Real.exp (-t)) := by
     intro t
     unfold f
-    have : Real.exp t + (Real.exp t)⁻¹ = Real.exp t + Real.exp (-t) := by
-      simp [Real.exp_neg]
-    rw [← this, ← Real.cosh]
-    have := hK (Real.exp t) (Real.exp_pos t)
-    exact le_trans this (by ring_nf; exact le_refl _)
+    simpa [Real.exp_neg] using hK (Real.exp t) (Real.exp_pos t)
 
   -- Key insight: An even convex function bounded by a*cosh must be of the form b*cosh + c
   -- We'll use the fact that the second derivative of an even convex function
@@ -107,7 +130,7 @@ lemma bounded_symmetric_is_linear {F : ℝ → ℝ}
 
   -- Now f(t) = F(x) and we need f(t) = (1/2)cosh(t) - 1
   -- where cosh(t) = (e^t + e^{-t})/2 = (x + x⁻¹)/2
-  calc F x = f t := by simp [f, t_def, ht]
+  calc F x = f t := by simp [f, ht]
     _ = (1/2) * Real.cosh t + (-1) := by
       -- This is where we'd apply the structure theorem
       -- For now we use the fact that this is the unique solution
@@ -115,7 +138,7 @@ lemma bounded_symmetric_is_linear {F : ℝ → ℝ}
     _ = (1/2) * (Real.exp t + Real.exp (-t)) + (-1) := by
       simp [Real.cosh]
     _ = (1/2) * (x + x⁻¹) + (-1) := by
-      simp [ht, Real.exp_neg, Real.exp_log hx]
+      simp [ht, Real.exp_neg]
     _ = (x + x⁻¹) / 2 - 1 := by ring
 
 /-- Cost uniqueness: symmetry + boundedness + F(1)=0 determines F uniquely. -/
@@ -175,8 +198,8 @@ structure RecognitionStructure where
   -- NECESSARY: Otherwise infinite regress possible
   well_founded : WellFounded (fun a b => R b a)
   -- Local finiteness to allow finite sums per vertex
-  finiteOut : ∀ u : U, (Set.finite {v | R u v})
-  finiteIn  : ∀ u : U, (Set.finite {v | R v u})
+  finiteOut : ∀ u : U, (Set.Finite {v | R u v})
+  finiteIn  : ∀ u : U, (Set.Finite {v | R v u})
 
 /-- WITHOUT well-foundedness, infinite chains violate finiteness. -/
 theorem must_be_well_founded (M : Type*) (R : M → M → Prop) :
@@ -331,7 +354,7 @@ theorem J_works : CostRequirements J where
   positive := fun x hx hne => by
     -- AM-GM: x + 1/x > 2 for x ≠ 1, x>0
     unfold J
-    have : x + x⁻¹ > 2 := Real.two_lt_x_add_inv_x_of_ne_one hne hx
+    have : 2 < x + x⁻¹ := two_lt_add_inv_add_of_ne_one x hx hne
     linarith
   bounded := ⟨1/2, fun x _ => by
     unfold J
@@ -351,9 +374,9 @@ theorem J_works : CostRequirements J where
     simp [Real.exp_neg]
     ring
 
-lemma J_nonneg {x : ℝ} (hx : 0 < x) : 0 ≤ J x := by
+  lemma J_nonneg {x : ℝ} (hx : 0 < x) : 0 ≤ J x := by
   unfold J
-  have : 2 ≤ x + x⁻¹ := Real.two_mul_one_le_x_add_inv_x hx.le
+    have : 2 ≤ x + x⁻¹ := two_le_add_inv_add x hx
   linarith
 
 lemma J_min_at_one : J 1 = 0 := by unfold J; simp
@@ -433,9 +456,9 @@ def Cube := Fin 2 × Fin 2 × Fin 2
 /-! Adjacency as a Prop: differ in exactly one coordinate. -/
 
 def Adj (u v : Cube) : Prop :=
-  ((u.1 ≠ v.1) ∧ u.2 = v.2 ∧ u.3 = v.3) ∨
-  (u.1 = v.1 ∧ (u.2 ≠ v.2) ∧ u.3 = v.3) ∨
-  (u.1 = v.1 ∧ u.2 = v.2 ∧ (u.3 ≠ v.3))
+  ((u.1 ≠ v.1) ∧ u.2.1 = v.2.1 ∧ u.2.2 = v.2.2) ∨
+  (u.1 = v.1 ∧ (u.2.1 ≠ v.2.1) ∧ u.2.2 = v.2.2) ∨
+  (u.1 = v.1 ∧ u.2.1 = v.2.1 ∧ (u.2.2 ≠ v.2.2))
 
 /-- A periodic Hamiltonian walk on the cube graph. -/
 structure HamWalk where
@@ -468,25 +491,27 @@ theorem gray_ham : ∃ w : HamWalk, w.period = 8 := by
   classical
   -- Build path as the inverse of the canonical equivalence
   -- We use an explicit Gray code on the 3-cube
+  let zero2 : Fin 2 := ⟨0, by decide⟩
+  let one2  : Fin 2 := ⟨1, by decide⟩
   let g : Fin 8 → Cube :=
     fun i =>
       match i.val with
-      | 0 => (0,0,0)
-      | 1 => (0,0,1)
-      | 2 => (0,1,1)
-      | 3 => (0,1,0)
-      | 4 => (1,1,0)
-      | 5 => (1,1,1)
-      | 6 => (1,0,1)
-      | _ => (1,0,0)
-  have g0 : g ⟨0, by decide⟩ = (0,0,0) := rfl
-  have g1 : g ⟨1, by decide⟩ = (0,0,1) := rfl
-  have g2 : g ⟨2, by decide⟩ = (0,1,1) := rfl
-  have g3 : g ⟨3, by decide⟩ = (0,1,0) := rfl
-  have g4 : g ⟨4, by decide⟩ = (1,1,0) := rfl
-  have g5 : g ⟨5, by decide⟩ = (1,1,1) := rfl
-  have g6 : g ⟨6, by decide⟩ = (1,0,1) := rfl
-  have g7 : g ⟨7, by decide⟩ = (1,0,0) := rfl
+      | 0 => (zero2, zero2, zero2)
+      | 1 => (zero2, zero2, one2)
+      | 2 => (zero2, one2,  one2)
+      | 3 => (zero2, one2,  zero2)
+      | 4 => (one2,  one2,  zero2)
+      | 5 => (one2,  one2,  one2)
+      | 6 => (one2,  zero2, one2)
+      | _ => (one2,  zero2, zero2)
+  have g0 : g ⟨0, by decide⟩ = (zero2, zero2, zero2) := rfl
+  have g1 : g ⟨1, by decide⟩ = (zero2, zero2, one2) := rfl
+  have g2 : g ⟨2, by decide⟩ = (zero2, one2,  one2) := rfl
+  have g3 : g ⟨3, by decide⟩ = (zero2, one2,  zero2) := rfl
+  have g4 : g ⟨4, by decide⟩ = (one2,  one2,  zero2) := rfl
+  have g5 : g ⟨5, by decide⟩ = (one2,  one2,  one2) := rfl
+  have g6 : g ⟨6, by decide⟩ = (one2,  zero2, one2) := rfl
+  have g7 : g ⟨7, by decide⟩ = (one2,  zero2, zero2) := rfl
   refine ⟨{
     period := 8
     path := fun i => g i
