@@ -280,6 +280,13 @@ theorem T3_continuity {M : RecognitionStructure} (L : Ledger M) [Conserves L] :
   ∀ ch : Chain M, Chain.head ch = Chain.last ch → chainFlux L ch = 0 :=
   Conserves.conserve
 
+/-- For any ledger and any closed chain, the flux defined as potential difference is 0. -/
+instance conserves_of_potential {M : RecognitionStructure} (L : Ledger M) : Conserves L where
+  conserve ch h := by
+    unfold chainFlux phi
+    -- head = last ⇒ difference is zero
+    simpa [h]
+
 end LedgerChain
 
 /-- Ledger existence: every recognition structure admits a ledger. -/
