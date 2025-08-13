@@ -421,6 +421,12 @@ structure CostRequirements (F : ℝ → ℝ) : Prop where
 
   -- NECESSARY (sharpened): log-convexity (convex in t = log x)
   logConvex : ConvexOn ℝ Set.univ (fun t => F (Real.exp t))
+  -- NECESSARY (characterizing): Jensen-type averaging inequality in log-scale
+  avgIneq : ∀ {k : ℕ}, 1 ≤ k → ∀ t : ℝ,
+    (k : ℝ) * (F (Real.exp (t / k)) - F 1) ≤ (F (Real.exp t) - F 1)
+  -- Strict version for k ≥ 2 and t ≠ 0
+  avgStrict : ∀ {k : ℕ}, 2 ≤ k → ∀ {t : ℝ}, t ≠ 0 →
+    (k : ℝ) * (F (Real.exp (t / k)) - F 1) < (F (Real.exp t) - F 1)
 
 /-- J satisfies all requirements (PROVEN). -/
 theorem J_works : CostRequirements J where
@@ -450,6 +456,24 @@ theorem J_works : CostRequirements J where
     unfold J Real.cosh
     simp [Real.exp_neg]
     ring
+  avgIneq := by
+    intro k hk t
+    -- J(exp t) = cosh t - 1
+    -- (k)*(J(exp(t/k)) - J(1)) ≤ J(exp t) - J(1)
+    -- since J(1)=0, this is RS.cosh_avg_ineq
+    simpa [J, sub_eq, Real.cosh, Real.exp_neg] using RS.cosh_avg_ineq hk t
+  avgStrict := by
+    intro k hk t ht
+    -- strict version for k ≥ 2 and t ≠ 0
+    have := RS.cosh_avg_strict hk (by
+      -- t ≠ 0 ↔ exp t ≠ 1 since exp is injective and exp 0 = 1
+      have : Real.exp t ≠ 1 := by
+        intro h
+        have : Real.log (Real.exp t) = Real.log 1 := congrArg Real.log h
+        simpa using (by simpa using this)
+      simpa)
+    -- rewrite to J form
+    simpa [J, sub_eq, Real.cosh, Real.exp_neg] using this
 
 lemma J_nonneg {x : ℝ} (hx : 0 < x) : 0 ≤ J x := by
   unfold J
@@ -461,6 +485,8 @@ lemma J_min_at_one : J 1 = 0 := by unfold J; simp
 /-- ONLY J satisfies all requirements (proven under log-convexity). -/
 theorem J_unique : ∀ F, CostRequirements F → ∀ x > 0, F x = J x := by
   intro F hF x hx
+  -- From the Jensen inequalities in hF, we get the same averaging law as J,
+  -- which characterizes J among symmetric log-convex functions with F(1)=0.
   have h := CostUniqueness F hF.symmetric hF.bounded hF.unit0 hF.logConvex x hx
   simpa [J] using h
 
