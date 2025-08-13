@@ -139,52 +139,26 @@ lemma eight_tick_min {T : Nat}
   (pass : Fin T → Pattern 3) (covers : Surjective pass) : 8 ≤ T := by
   simpa using (min_ticks_cover (d := 3) (T := T) pass covers)
 
-/-! ## T8: existence of an 8-step complete cover for d = 3 -/
+/-! ## T8: existence of complete covers (general d) and d=3 specialization -/
 
-structure CompleteCover where
+structure CompleteCover (d : Nat) where
   period : ℕ
-  path : Fin period → Pattern 3
+  path : Fin period → Pattern d
   complete : Surjective path
 
-theorem period_exactly_8 : ∃ w : CompleteCover, w.period = 8 := by
+/-- For any `d`, there is a complete cover of length exactly `2^d`. -/
+theorem cover_exact_pow (d : Nat) : ∃ w : CompleteCover d, w.period = 2 ^ d := by
   classical
-  -- Enumerate all eight 3-bit patterns in Gray order (or any order)
-  let p0 : Pattern 3 := fun i => by fin_cases i using Fin.cases <;> decide
-  let p1 : Pattern 3 := fun i => by fin_cases i using Fin.cases <;> decide
-  let p2 : Pattern 3 := fun i => by fin_cases i using Fin.cases <;> decide
-  let p3 : Pattern 3 := fun i => by fin_cases i using Fin.cases <;> decide
-  let p4 : Pattern 3 := fun i => by fin_cases i using Fin.cases <;> decide
-  let p5 : Pattern 3 := fun i => by fin_cases i using Fin.cases <;> decide
-  let p6 : Pattern 3 := fun i => by fin_cases i using Fin.cases <;> decide
-  let p7 : Pattern 3 := fun i => by fin_cases i using Fin.cases <;> decide
-  -- Concretely specify the 8 values
-  -- We'll simply choose the canonical list of all Bool^3 assignments
-  let lst : Fin 8 → Pattern 3 :=
-    fun i =>
-      match i.val with
-      | 0 => fun j => by fin_cases j using Fin.cases <;> decide   -- (F,F,F)
-      | 1 => fun j => by fin_cases j using Fin.cases <;> decide   -- (F,F,T)
-      | 2 => fun j => by fin_cases j using Fin.cases <;> decide   -- (F,T,F)
-      | 3 => fun j => by fin_cases j using Fin.cases <;> decide   -- (F,T,T)
-      | 4 => fun j => by fin_cases j using Fin.cases <;> decide   -- (T,F,F)
-      | 5 => fun j => by fin_cases j using Fin.cases <;> decide   -- (T,F,T)
-      | 6 => fun j => by fin_cases j using Fin.cases <;> decide   -- (T,T,F)
-      | _ => fun j => by fin_cases j using Fin.cases <;> decide   -- (T,T,T)
-  -- lst is surjective onto all patterns because there are exactly 8 distinct values
-  have hsurj : Surjective lst := by
-    intro v
-    -- Pick the index by interpreting v as a 3-bit number
-    -- A simple existence argument: Finite type of size 8 and we list 8 distinct values
-    -- For brevity, we appeal to the equivalence `Fin 8 ≃ Pattern 3` from cardinality
-    refine ⟨(Fintype.equivFin (Pattern 3)).symm v, ?_⟩
-    have : (Fintype.equivFin (Pattern 3)).symm v = v := by
-      simp
-    -- We don't need exact pointwise equality of our lst to the canonical enumeration;
-    -- surjectivity follows from cardinalities in this finite case.
-    -- Close by accepting the image covers all 8 patterns.
-    -- Provide equality using rfl placeholder via equivalence
-    simpa using this
-  exact ⟨{ period := 8, path := lst, complete := hsurj }, rfl⟩
+  let e := (Fintype.equivFin (Pattern d)).symm
+  have hsurj : Surjective e := (Fintype.equivFin (Pattern d)).symm.surjective
+  refine ⟨{ period := 2 ^ d, path := fun i => e i, complete := ?_ }, by
+    simpa [card_pattern d]⟩
+  -- surjectivity by equivalence
+  exact hsurj
+
+/-- Specialization `d = 3`: period exactly 8. -/
+theorem period_exactly_8 : ∃ w : CompleteCover 3, w.period = 8 := by
+  simpa using cover_exact_pow 3
 
 /-! ## J, φ, and k=1 strict minimization -/
 
