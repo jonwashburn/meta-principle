@@ -6,6 +6,7 @@
 -/
 
 import Mathlib.Data.Fintype.Basic
+import Mathlib.Data.Fintype.Card
 import Mathlib.Data.Fin.Basic
 import Mathlib.Data.Int.Basic
 import Mathlib.Data.Real.Basic
@@ -13,6 +14,7 @@ import Mathlib.Data.Real.Sqrt
 import Mathlib.Tactic
 
 open Classical Function
+open scoped BigOperators
 
 namespace IndisputableMonolith
 
@@ -414,6 +416,73 @@ theorem doubleEntry_normalized {L : StrongLedger M} [DoubleEntry M L]
   constructor
   · intro v; simpa [hδ, InEdges, nsmul_one] using (DoubleEntry.debit_def (M:=M) (L:=L) v)
   · intro u; simpa [hδ, OutEdges, nsmul_one] using (DoubleEntry.credit_def (M:=M) (L:=L) u)
+
+/-- Dependent-sum over in-edges bijects with edge set. -/
+theorem card_sigma_inEdges_eq_edges :
+  Fintype.card (Sigma (fun v : M.U => InEdges (M:=M) v)) = numEdges (M:=M) := by
+  classical
+  simpa [numEdges] using Fintype.card_congr (inSigmaEquivEdges (M:=M))
+
+/-- Dependent-sum over out-edges bijects with edge set. -/
+theorem card_sigma_outEdges_eq_edges :
+  Fintype.card (Sigma (fun u : M.U => OutEdges (M:=M) u)) = numEdges (M:=M) := by
+  classical
+  simpa [numEdges] using Fintype.card_congr (outSigmaEquivEdges (M:=M))
+
+/-- Sum of indegrees equals number of edges. -/
+theorem sum_indeg_eq_edges : (∑ v : M.U, indeg (M:=M) v) = numEdges (M:=M) := by
+  classical
+  have h := Fintype.card_sigma (fun v : M.U => InEdges (M:=M) v)
+  -- h : card (Σ v, InEdges v) = ∑ v, card (InEdges v)
+  -- rewrite both sides
+  simpa [indeg, card_sigma_inEdges_eq_edges (M:=M)] using h.symm
+
+/-- Sum of outdegrees equals number of edges. -/
+theorem sum_outdeg_eq_edges : (∑ u : M.U, outdeg (M:=M) u) = numEdges (M:=M) := by
+  classical
+  have h := Fintype.card_sigma (fun u : M.U => OutEdges (M:=M) u)
+  simpa [outdeg, card_sigma_outEdges_eq_edges (M:=M)] using h.symm
+
+/-- With δ normalized to 1, total debit equals number of edges (as ℤ). -/
+theorem debit_sum_eq_edges_int {L : StrongLedger M} [DoubleEntry M L]
+  (hδ : L.δ = 1) : (∑ v : M.U, L.debit v) = (numEdges (M:=M) : ℤ) := by
+  classical
+  have hnorm := doubleEntry_normalized (M:=M) (L:=L) hδ
+  calc
+    (∑ v : M.U, L.debit v)
+        = ∑ v, ((Fintype.card (InEdges (M:=M) v) : ℤ)) := by
+          funext v; simp [hnorm.left v]
+    _ = (∑ v, indeg (M:=M) v : ℤ) := by
+          -- coe sum of Nats to ℤ
+          simp [indeg]
+    _ = (numEdges (M:=M) : ℤ) := by
+          simpa using congrArg (fun n : Nat => (n : ℤ)) (sum_indeg_eq_edges (M:=M))
+
+/-- With δ normalized to 1, total credit equals number of edges (as ℤ). -/
+theorem credit_sum_eq_edges_int {L : StrongLedger M} [DoubleEntry M L]
+  (hδ : L.δ = 1) : (∑ u : M.U, L.credit u) = (numEdges (M:=M) : ℤ) := by
+  classical
+  have hnorm := doubleEntry_normalized (M:=M) (L:=L) hδ
+  calc
+    (∑ u : M.U, L.credit u)
+        = ∑ u, ((Fintype.card (OutEdges (M:=M) u) : ℤ)) := by
+          funext u; simp [hnorm.right u]
+    _ = (∑ u, outdeg (M:=M) u : ℤ) := by simp [outdeg]
+    _ = (numEdges (M:=M) : ℤ) := by
+          simpa using congrArg (fun n : Nat => (n : ℤ)) (sum_outdeg_eq_edges (M:=M))
+
+/-- Normalized uniqueness: if δ = 1 and DoubleEntry holds, the ledger is canonical. -/
+theorem canonical_unique_normalized {L : StrongLedger M} [DoubleEntry M L]
+  (hδ : L.δ = 1) : L = CanonicalLedger (M:=M) := by
+  classical
+  cases L with
+  | mk δ δ_pos debit credit =>
+    have hδ' : δ = 1 := hδ
+    -- Extensionality on fields
+    cases hδ'
+    -- Show debit/credit agree with canonical
+    have hnorm := doubleEntry_normalized (M:=M) (L:={ δ := 1, δ_pos := δ_pos, debit := debit, credit := credit }) rfl
+    apply rfl
 
 end StrongT4
 
