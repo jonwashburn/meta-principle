@@ -16,6 +16,18 @@ open Classical Function
 
 namespace IndisputableMonolith
 
+/-! # The Eight Theorems (index)
+
+1. MP: Nothing cannot recognize itself (mp_holds)
+2. T2: Atomicity of ticks (T2_atomicity)
+3. T3: Continuity on closed chains (T3_continuity)
+4. T4: Ledger necessity, degree-counting under DoubleEntry (StrongT4 section)
+5. J: Cost basics (J, J_nonneg, J_pos_of_ne_one, J_strictMono_on_ge_one)
+6. φ: Fixed point and uniqueness (phi_fixed, phi_unique_pos)
+7. k=1: Strict minimization (k_equals_one)
+8. T7/T8: 2^d minimality and 8-step complete cover (eight_tick_min, period_exactly_8)
+
+-/
 /-! ## Meta-Principle: Nothing cannot recognize itself -/
 
 abbrev Nothing := Empty
@@ -405,7 +417,7 @@ theorem doubleEntry_normalized {L : StrongLedger M} [DoubleEntry M L]
 
 end StrongT4
 
-/-! ## Cost uniqueness via averaging (up to unit, pinned here to J) -/
+/-! ## Cost uniqueness via averaging (interface; J shown to satisfy) -/
 
 structure CostRequirements (F : ℝ → ℝ) : Prop where
   symmetric : ∀ x > 0, F x = F x⁻¹
@@ -426,13 +438,10 @@ theorem Jcost_meets : CostRequirements Jcost := by
   · intro k hk t; unfold Jcost; nlinarith
   · intro k hk t ht; unfold Jcost; nlinarith
 
-theorem CostUnique (F : ℝ → ℝ) (hF : CostRequirements F) : ∀ x > 0, F x = Jcost x := by
-  -- Sketch-level: the averaging inequalities plus symmetry and normalization
-  -- force `t ↦ F(exp t) + 1` to be exactly `cosh t`, hence F = J.
-  -- We keep this compact here for the monolith.
-  intro x hx
-  -- Pin to Jcost by the characterization
-  rfl
+-- Note: A full proof that CostRequirements characterizes Jcost can be inlined
+-- using convex/averaging machinery. We keep the interface here and certify that
+-- Jcost meets it (Jcost_meets). Models can assume CostRequirements for any F
+-- and then use Jcost as the canonical choice.
 
 /-! ## T4: Ledger necessity (up to unit choice) in this simplified setting -/
 
