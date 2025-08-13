@@ -9,6 +9,7 @@ import Mathlib.Data.Fintype.Basic
 import Mathlib.Data.Fin.Basic
 import Mathlib.Data.Int.Basic
 import Mathlib.Data.Real.Basic
+import Mathlib.Data.Real.Sqrt
 import Mathlib.Tactic
 
 open Classical Function
@@ -252,31 +253,64 @@ lemma phi_fixed : recurrence 1 φ := by
   ring_nf; rw [this]; ring
 
 /-- φ is the unique positive solution of x = 1 + 1/x. -/
+lemma phi_sq : φ^2 = φ + 1 := by
+  -- From φ = 1 + 1/φ multiply both sides by φ
+  have h := phi_fixed
+  have : φ = 1 + 1/φ := by simpa using h
+  have hφ0 : φ ≠ 0 := by
+    unfold φ; have : 0 < Real.sqrt 5 := Real.sqrt_pos.mpr (by norm_num : (0:ℝ) < 5); nlinarith
+  have := congrArg (fun t => t * φ) this
+  field_simp [hφ0] at this
+  ring_nf at this
+  simpa using this
+
+lemma phi_gt_one : 1 < φ := by
+  unfold φ
+  have : 2 < Real.sqrt 5 := by
+    -- sqrt 5 > 2 since 5 > 4
+    have : (2:ℝ)^2 < 5 := by norm_num
+    exact (sq_lt_iff_mul_self_lt.mpr this).trans_eq ?h -- fallback; simpler:
+  -- Simpler route
+  have : 0 < Real.sqrt 5 := Real.sqrt_pos.mpr (by norm_num : (0:ℝ) < 5)
+  nlinarith
+
+/-- φ is the unique positive solution of x = 1 + 1/x. -/
 lemma phi_unique_pos : ∀ x > 0, recurrence 1 x → x = φ := by
   intro x hxpos hx
-  have : x^2 - x - 1 = 0 := by
-    have : x = 1 + 1/x := by simpa using hx
-    have hx0 : x ≠ 0 := ne_of_gt hxpos
-    have : x^2 = x + 1 := by
-      have := congrArg (fun t => t * x) this; field_simp [hx0] at this; ring_nf at this; simpa using this
+  have hx0 : x ≠ 0 := ne_of_gt hxpos
+  have hx_sq : x^2 = x + 1 := by
+    have hx' : x = 1 + 1/x := by simpa using hx
+    have := congrArg (fun t => t * x) hx'
+    field_simp [hx0] at this
     ring_nf at this
-    nlinarith
-  -- Roots of t^2 - t - 1 are (1 ± √5)/2; positive root is φ
-  have hxge : x ≥ 0 := le_of_lt hxpos
-  have hφpos : φ > 0 := by
-    unfold φ; have : 0 < Real.sqrt 5 := Real.sqrt_pos.mpr (by norm_num : (0:ℝ) < 5); nlinarith
-  -- Conclude by standard quadratic formula monotonicity (select positive root)
-  -- In this monolith, we accept the classical identification x = φ via positivity.
-  -- For succinctness, rewrite to φ using known identity path (sketch-level, no axioms used).
-  -- Provide the final equality as the positive root selection.
-  -- This is standard and routine; full algebraic detail can be inlined if desired.
-  have : x = φ := by
-    -- compare `x` with `φ` using uniqueness of positive root
-    -- both satisfy the same quadratic and both are > 0, conclude equality
-    -- We close succinctly here to keep the monolith compact.
-    -- (Alternatively one can expand the quadratic formula in full rigour.)
-    exact rfl
-  simpa using this
+    simpa using this
+  -- Factorization: for any t, t^2 - t - 1 = (t - φ) * (t - (1 - φ))
+  have hφ_mul : φ * (1 - φ) = -1 := by
+    have := phi_sq
+    have : φ^2 - φ = 1 := by simpa [sub_eq, add_comm, add_left_comm, add_assoc] using this
+    have : φ * (φ - 1) = 1 := by simpa [mul_comm, mul_left_comm, mul_assoc, pow_two, sub_eq, add_comm, add_left_comm, add_assoc] using this
+    have : φ*φ - φ = 1 := by simpa [mul_comm, mul_left_comm, mul_assoc]
+    -- rearrange φ*(1-φ) = -1
+    have : φ - φ^2 = -1 := by linarith
+    simpa [mul_sub, sub_eq_add_neg, add_comm, add_left_comm, add_assoc, mul_comm, mul_left_comm, mul_assoc, pow_two] using this
+  have factor : (x - φ) * (x - (1 - φ)) = 0 := by
+    -- expand and use hx_sq and phi_sq
+    have : x^2 - x - 1 = 0 := by
+      have := congrArg (fun z => z - x - 1) hx_sq; simpa using this
+    -- compute via Vieta
+    -- (x - a)(x - b) = x^2 - (a+b)x + ab with a=φ, b=1-φ; since a+b=1 and ab=-1
+    have : (x - φ) * (x - (1 - φ)) = x^2 - (φ + (1 - φ)) * x + φ * (1 - φ) := by ring
+    simpa [hφ_mul] using by
+      simpa using this
+  -- Since 1 - φ < 0 and x > 0, x ≠ 1 - φ, hence x = φ
+  have one_sub_phi_neg : 1 - φ < 0 := by
+    have : 1 < φ := phi_gt_one
+    linarith
+  have hx_ne : x ≠ 1 - φ := by exact ne_of_gt (lt_trans one_sub_phi_neg hxpos)
+  have hmul0 := eq_zero_or_eq_zero_of_mul_eq_zero factor
+  cases hmul0 with
+  | inl h => simpa [sub_eq] using h
+  | inr h => exact (hx_ne (by simpa [sub_eq] using h)).elim
 
 def xk (k : ℕ) : ℝ := (1 + Real.sqrt (1 + 4 * (k : ℝ))) / 2
 
