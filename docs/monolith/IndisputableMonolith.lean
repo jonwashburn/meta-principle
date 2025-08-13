@@ -495,6 +495,50 @@ lemma reach_in_ball {n : Nat} {x y : M.U}
 
 end Causality
 
+/‑! ## Modeling: Mass constructor and SI mapping (symbolic) -/ 
+
+namespace Modeling
+
+open IndisputableMonolith
+
+variable {FieldId : Type}
+
+structure RSModel (FieldId : Type) where
+  B     : FieldId → ℝ
+  f     : FieldId → ℝ
+  rung  : FieldId → ℤ
+  E_coh : ℝ
+  Epos  : 0 < E_coh
+
+def powr (φ : ℝ) (r : ℝ) : ℝ := Real.exp (r * Real.log φ)
+
+lemma powr_mono {φ : ℝ} (hφ : 1 < φ) : Monotone (fun r : ℝ => powr φ r) := by
+  intro r s hrs
+  have hlog : 0 < Real.log φ := by
+    have : φ > 1 := hφ
+    exact (Real.log_pos_iff.mpr this)
+  have : r * Real.log φ ≤ s * Real.log φ := by
+    have h := mul_le_mul_of_nonneg_right hrs (le_of_lt hlog)
+    simpa using h
+  exact (Real.exp_le_exp.mpr this)
+
+def mass (M : RSModel FieldId) (φ : ℝ) (id : FieldId) : ℝ :=
+  M.B id * M.E_coh * powr φ ((M.rung id : ℝ) + M.f id)
+
+lemma mass_monotone_in_rung (M : RSModel FieldId) {id₁ id₂ : FieldId}
+  (hφ : 1 < φ)
+  (hB : M.B id₁ = M.B id₂)
+  (hf : M.f id₁ = M.f id₂)
+  (hle : (M.rung id₁ : ℝ) ≤ (M.rung id₂ : ℝ)) :
+  mass M φ id₁ ≤ mass M φ id₂ := by
+  unfold mass
+  have := powr_mono (φ := φ) hφ (by simpa [hf] using add_le_add_right hle (M.f id₁))
+  have hcommon : M.B id₁ * M.E_coh = M.B id₂ * M.E_coh := by simpa [hB] using rfl
+  -- Multiply the monotone powr inequality by the positive common factor if needed
+  exact mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left this (by positivity)) (by positivity)
+
+end Modeling
+
 /-! ## Cost uniqueness via averaging (interface; J shown to satisfy) -/
 
 structure CostRequirements (F : ℝ → ℝ) : Prop where
