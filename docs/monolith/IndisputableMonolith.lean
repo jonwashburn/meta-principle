@@ -13,6 +13,19 @@ open Classical Function
 
 namespace IndisputableMonolith
 
+/-! ## Meta-Principle: Nothing cannot recognize itself -/
+
+abbrev Nothing := Empty
+
+structure Recognition (A : Type) (B : Type) : Type where
+  recognizer : A
+  recognized : B
+
+def MP : Prop := ¬ ∃ r : Recognition Nothing Nothing, True
+
+theorem mp_holds : MP := by
+  intro h; rcases h with ⟨r, _⟩; cases r.recognizer
+
 /-! ## Recognition structure -/
 
 structure RecognitionStructure where
@@ -33,6 +46,22 @@ def last : M.U := ch.f ⟨ch.n, Nat.lt_succ_self _⟩
 @[simp] lemma head_def : ch.head = ch.f ⟨0, by decide⟩ := rfl
 @[simp] lemma last_def : ch.last = ch.f ⟨ch.n, Nat.lt_succ_self _⟩ := rfl
 end Chain
+
+/-! ## T2: Atomic tick interface -/
+
+class AtomicTick (M : RecognitionStructure) (L : Ledger M) : Prop where
+  postedAt : Nat → M.U → Prop
+  unique_post : ∀ t : Nat, ∃! u : M.U, postedAt t u
+
+/-- T2: if two postings occur at the same tick, they are the same posting. -/
+theorem T2_atomicity {M} {L : Ledger M} [AtomicTick M L] :
+  ∀ t u v, AtomicTick.postedAt (M:=M) (L:=L) t u →
+           AtomicTick.postedAt (M:=M) (L:=L) t v → u = v := by
+  intro t u v hu hv
+  rcases (AtomicTick.unique_post (M:=M) (L:=L) t) with ⟨w, hw, huniq⟩
+  have hu' : u = w := huniq u hu
+  have hv' : v = w := huniq v hv
+  exact hu'.trans hv'.symm
 
 /-! ## Ledger: potential and closed-chain continuity (T3) -/
 
@@ -94,5 +123,3 @@ lemma eight_tick_min {T : Nat}
   simpa using (min_ticks_cover (d := 3) (T := T) pass covers)
 
 end IndisputableMonolith
-
-
