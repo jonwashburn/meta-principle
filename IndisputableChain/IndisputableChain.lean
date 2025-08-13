@@ -1,4 +1,4 @@
--- Keep the entry-point light: only import proven minimality (T7) for now.
+-- Keep the entry point green while monolith evolves
 import «IndisputableChain».T7
 
 -- Re-export the main namespace
