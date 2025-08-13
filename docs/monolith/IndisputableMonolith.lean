@@ -1,10 +1,3 @@
-/-!
-  IndisputableMonolith.lean
-  Single-file, axiom-free core: Recognition structure + Ledger interface +
-  continuity on closed chains (T3) + lattice-independent 2^d minimality (T7).
-  No external dependencies beyond basic mathlib.
--/
-
 import Mathlib.Data.Fintype.Basic
 import Mathlib.Data.Fintype.Card
 import Mathlib.Data.Fin.Basic
@@ -391,6 +384,31 @@ theorem doubleEntry_normalized {L : StrongLedger M} [DoubleEntry M L]
   · intro v; simpa [hδ, InEdges, nsmul_one] using (DoubleEntry.debit_def (M:=M) (L:=L) v)
   · intro u; simpa [hδ, OutEdges, nsmul_one] using (DoubleEntry.credit_def (M:=M) (L:=L) u)
 
+/-- Integer coefficients (unique) for debit/credit relative to δ. -/
+def coeffDebit (L : StrongLedger M) (v : M.U) : Nat := Fintype.card (InEdges (M:=M) v)
+def coeffCredit (L : StrongLedger M) (u : M.U) : Nat := Fintype.card (OutEdges (M:=M) u)
+
+lemma debit_has_unique_coeff (L : StrongLedger M) [DoubleEntry M L]
+  (v : M.U) : ∃! n : Nat, L.debit v = n • L.δ := by
+  refine ⟨coeffDebit (M:=M) L v, ?hEq, ?hUniq⟩
+  · simpa [coeffDebit]
+      using (DoubleEntry.debit_def (M:=M) (L:=L) v)
+  · intro n hn
+    -- uniqueness follows from DoubleEntry’s explicit formula
+    -- since both sides are naturals applied to the same δ
+    -- match on the explicit expression
+    have := DoubleEntry.debit_def (M:=M) (L:=L) v
+    simpa [coeffDebit] using (by simpa [hn] using this)
+
+lemma credit_has_unique_coeff (L : StrongLedger M) [DoubleEntry M L]
+  (u : M.U) : ∃! n : Nat, L.credit u = n • L.δ := by
+  refine ⟨coeffCredit (M:=M) L u, ?hEq, ?hUniq⟩
+  · simpa [coeffCredit]
+      using (DoubleEntry.credit_def (M:=M) (L:=L) u)
+  · intro n hn
+    have := DoubleEntry.credit_def (M:=M) (L:=L) u
+    simpa [coeffCredit] using (by simpa [hn] using this)
+
 /-- Dependent-sum over in-edges bijects with edge set. -/
 theorem card_sigma_inEdges_eq_edges :
   Fintype.card (Sigma (fun v : M.U => InEdges (M:=M) v)) = numEdges (M:=M) := by
@@ -459,6 +477,23 @@ theorem canonical_unique_normalized {L : StrongLedger M} [DoubleEntry M L]
     apply rfl
 
 end StrongT4
+
+/-! ## Causality: reachability and n-step light-cone -/
+
+section Causality
+variable {M : RecognitionStructure}
+
+inductive Reach : Nat → M.U → M.U → Prop
+  | refl (x : M.U) : Reach 0 x x
+  | step {n} {x y z : M.U} : Reach n x y → M.R y z → Reach (n+1) x z
+
+def ball (n : Nat) (x : M.U) : Set M.U := {y | ∃ m ≤ n, Reach (M:=M) m x y}
+
+lemma reach_in_ball {n : Nat} {x y : M.U}
+  (h : Reach (M:=M) n x y) : y ∈ ball (M:=M) n x := by
+  refine ⟨n, le_rfl, h⟩
+
+end Causality
 
 /-! ## Cost uniqueness via averaging (interface; J shown to satisfy) -/
 
