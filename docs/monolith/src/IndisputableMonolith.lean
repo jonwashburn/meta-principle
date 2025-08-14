@@ -427,6 +427,27 @@ class AveragingAgree (F : ℝ → ℝ) : Prop where
 class AveragingDerivation (F : ℝ → ℝ) extends SymmUnit F : Prop where
   agrees : AgreesOnExp F
 
+/-- Generic builder hypotheses for exp-axis equality, intended to be discharged
+    in concrete models via Jensen/strict convexity arguments. Once both bounds
+    are available, equality on the exp-axis follows. -/
+class AveragingBounds (F : ℝ → ℝ) extends SymmUnit F : Prop where
+  upper : ∀ t : ℝ, F (Real.exp t) ≤ Jcost (Real.exp t)
+  lower : ∀ t : ℝ, Jcost (Real.exp t) ≤ F (Real.exp t)
+
+/-- From two-sided bounds on the exp-axis, conclude agreement with `Jcost`. -/
+theorem agrees_on_exp_of_bounds {F : ℝ → ℝ} [AveragingBounds F] :
+  AgreesOnExp F := by
+  intro t
+  have h₁ := AveragingBounds.upper (F:=F) t
+  have h₂ := AveragingBounds.lower (F:=F) t
+  exact le_antisymm h₁ h₂
+
+/-- Builder: any `AveragingBounds` instance induces an `AveragingDerivation` instance. -/
+instance (priority := 90) averagingDerivation_of_bounds {F : ℝ → ℝ} [AveragingBounds F] :
+  AveragingDerivation F :=
+  { toSymmUnit := (inferInstance : SymmUnit F)
+  , agrees := agrees_on_exp_of_bounds (F:=F) }
+
 theorem agree_on_exp_extends {F : ℝ → ℝ}
   (hAgree : AgreesOnExp F) : ∀ {x : ℝ}, 0 < x → F x = Jcost x := by
   intro x hx
