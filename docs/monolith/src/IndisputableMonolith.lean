@@ -513,6 +513,12 @@ instance : AveragingDerivation Jcost :=
   { toSymmUnit := (inferInstance : SymmUnit Jcost)
   , agrees := Jcost_agrees_on_exp }
 
+/-- Trivial Jensen sketch instance for `Jcost`: its exp-axis bounds hold by reflexivity. -/
+instance : JensenSketch Jcost :=
+  { toSymmUnit := (inferInstance : SymmUnit Jcost)
+  , axis_upper := by intro t; exact le_of_eq rfl
+  , axis_lower := by intro t; exact le_of_eq rfl }
+
 end Cost
 
 /-! Axiom audit hooks: uncomment locally to inspect axiom usage. Keep commented for library builds.
@@ -524,6 +530,9 @@ end Cost
 -- #print axioms IndisputableMonolith.eight_tick_min
 -- #print axioms IndisputableMonolith.Potential.T4_unique_on_reachN
 -- #print axioms IndisputableMonolith.Cost.F_eq_J_on_pos_of_derivation
+-- #print axioms IndisputableMonolith.Cost.agrees_on_exp_of_bounds
+-- #print axioms IndisputableMonolith.Cost.averagingDerivation_of_bounds
+-- #print axioms IndisputableMonolith.Cost.JensenSketch
 
 -/
 
