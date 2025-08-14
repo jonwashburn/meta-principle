@@ -316,7 +316,7 @@ lemma Jcost_symm {x : ℝ} (hx : 0 < x) : Jcost x = Jcost x⁻¹ := by
 def AgreesOnExp (F : ℝ → ℝ) : Prop := ∀ t : ℝ, F (Real.exp t) = Jcost (Real.exp t)
 
 /-- Symmetry and unit normalization interface for a candidate cost. -/
-structure SymmUnit (F : ℝ → ℝ) : Prop where
+class SymmUnit (F : ℝ → ℝ) : Prop where
   symmetric : ∀ {x}, 0 < x → F x = F x⁻¹
   unit0 : F 1 = 0
 
@@ -359,6 +359,18 @@ theorem F_eq_J_on_pos_of_derivation (F : ℝ → ℝ) [AveragingDerivation F] :
   intro t; rfl
 
 instance : AveragingAgree Jcost := ⟨Jcost_agrees_on_exp⟩
+
+/-- Jcost satisfies symmetry and unit normalization. -/
+instance : SymmUnit Jcost :=
+  { symmetric := by
+      intro x hx
+      simpa using (Jcost_symm (x:=x) hx)
+    , unit0 := Jcost_unit0 }
+
+/-- Concrete averaging-derivation instance for the canonical cost `Jcost`. -/
+instance : AveragingDerivation Jcost :=
+  { toSymmUnit := (inferInstance : SymmUnit Jcost)
+  , agrees := Jcost_agrees_on_exp }
 
 end Cost
 
