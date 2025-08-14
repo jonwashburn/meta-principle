@@ -217,6 +217,11 @@ lemma reach_in_ball {K : Kinematics α} {x y : α} {n : Nat}
 lemma reach_le_in_ball {K : Kinematics α} {x y : α} {k n : Nat}
   (hk : k ≤ n) (h : ReachN K k x y) : inBall K x n y := ⟨k, hk, h⟩
 
+def Reaches (K : Kinematics α) (x y : α) : Prop := ∃ n, ReachN K n x y
+
+lemma reaches_of_reachN {K : Kinematics α} {x y : α} {n : Nat}
+  (h : ReachN K n x y) : Reaches K x y := ⟨n, h⟩
+
 end Causality
 
 /-! ## T4 (potential uniqueness): placeholder for componentwise uniqueness (to keep build green). -/
@@ -262,6 +267,14 @@ theorem T4_unique_on_reachN {δ : ℤ} {p q : Pot M}
   have : p x0 - q x0 = 0 := by simpa [hbase]
   have : p y - q y = 0 := by simpa [this] using hdiff
   simpa using sub_eq_zero.mp this
+
+/-- Componentwise uniqueness: if p and q agree at x0, then they agree at every y reachable from x0. -/
+theorem T4_unique_on_component {δ : ℤ} {p q : Pot M}
+  (hp : DE (M:=M) δ p) (hq : DE (M:=M) δ q) {x0 y : M.U}
+  (hbase : p x0 = q x0)
+  (hreach : Causality.Reaches (Kin M) x0 y) : p y = q y := by
+  rcases hreach with ⟨n, h⟩
+  exact T4_unique_on_reachN (M:=M) (δ:=δ) (p:=p) (q:=q) hp hq (x0:=x0) hbase (n:=n) (y:=y) h
 
 /-- If y lies in the n-ball around x0, then the two δ-potentials agree at y. -/
 theorem T4_unique_on_inBall {δ : ℤ} {p q : Pot M}
@@ -315,6 +328,11 @@ theorem F_eq_J_on_pos {F : ℝ → ℝ}
 theorem F_eq_J_on_pos_of_averaging {F : ℝ → ℝ} [AveragingAgree F] :
   ∀ {x : ℝ}, 0 < x → F x = Jcost x :=
   F_eq_J_on_pos (hAgree := AveragingAgree.agrees (F:=F))
+
+@[simp] theorem Jcost_agrees_on_exp : AgreesOnExp Jcost := by
+  intro t; rfl
+
+instance : AveragingAgree Jcost := ⟨Jcost_agrees_on_exp⟩
 
 end Cost
 
