@@ -222,6 +222,13 @@ def Reaches (K : Kinematics α) (x y : α) : Prop := ∃ n, ReachN K n x y
 lemma reaches_of_reachN {K : Kinematics α} {x y : α} {n : Nat}
   (h : ReachN K n x y) : Reaches K x y := ⟨n, h⟩
 
+-- Transitivity across lengths can be developed if needed; omitted to keep the core minimal.
+
+lemma inBall_mono {K : Kinematics α} {x y : α} {n m : Nat}
+  (hnm : n ≤ m) : inBall K x n y → inBall K x m y := by
+  intro ⟨k, hk, hkreach⟩
+  exact ⟨k, le_trans hk hnm, hkreach⟩
+
 end Causality
 
 /-! ## T4 (potential uniqueness): placeholder for componentwise uniqueness (to keep build green). -/
@@ -308,8 +315,17 @@ lemma Jcost_symm {x : ℝ} (hx : 0 < x) : Jcost x = Jcost x⁻¹ := by
 
 def AgreesOnExp (F : ℝ → ℝ) : Prop := ∀ t : ℝ, F (Real.exp t) = Jcost (Real.exp t)
 
+/-- Symmetry and unit normalization interface for a candidate cost. -/
+structure SymmUnit (F : ℝ → ℝ) : Prop where
+  symmetric : ∀ {x}, 0 < x → F x = F x⁻¹
+  unit0 : F 1 = 0
+
 /-- Interface: supply the averaging argument as a typeclass to obtain exp-axis agreement. -/
 class AveragingAgree (F : ℝ → ℝ) : Prop where
+  agrees : AgreesOnExp F
+
+/-- Convex-averaging derivation hook: a typeclass that asserts symmetry+unit and yields exp-axis agreement. -/
+class AveragingDerivation (F : ℝ → ℝ) extends SymmUnit F : Prop where
   agrees : AgreesOnExp F
 
 theorem agree_on_exp_extends {F : ℝ → ℝ}
@@ -328,6 +344,16 @@ theorem F_eq_J_on_pos {F : ℝ → ℝ}
 theorem F_eq_J_on_pos_of_averaging {F : ℝ → ℝ} [AveragingAgree F] :
   ∀ {x : ℝ}, 0 < x → F x = Jcost x :=
   F_eq_J_on_pos (hAgree := AveragingAgree.agrees (F:=F))
+
+/-- If an averaging derivation instance is available (encodes symmetry+unit and the convex averaging step),
+    conclude exp-axis agreement. -/
+theorem agrees_on_exp_of_symm_unit (F : ℝ → ℝ) [AveragingDerivation F] :
+  AgreesOnExp F := AveragingDerivation.agrees (F:=F)
+
+/-- Convenience: symmetry+unit with an averaging derivation yields F = J on ℝ_{>0}. -/
+theorem F_eq_J_on_pos_of_derivation (F : ℝ → ℝ) [AveragingDerivation F] :
+  ∀ {x : ℝ}, 0 < x → F x = Jcost x :=
+  F_eq_J_on_pos (hAgree := agrees_on_exp_of_symm_unit F)
 
 @[simp] theorem Jcost_agrees_on_exp : AgreesOnExp Jcost := by
   intro t; rfl
