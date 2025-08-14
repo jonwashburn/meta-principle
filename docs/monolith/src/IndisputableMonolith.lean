@@ -438,6 +438,12 @@ class AveragingAgree (F : ℝ → ℝ) : Prop where
 class AveragingDerivation (F : ℝ → ℝ) extends SymmUnit F : Prop where
   agrees : AgreesOnExp F
 
+/-- Evenness on the log-axis follows from symmetry on multiplicative positives. -/
+lemma even_on_log_of_symm {F : ℝ → ℝ} [SymmUnit F] (t : ℝ) :
+  F (Real.exp t) = F (Real.exp (-t)) := by
+  have hx : 0 < Real.exp t := Real.exp_pos t
+  simpa [Real.exp_neg] using (SymmUnit.symmetric (F:=F) hx)
+
 /-- Generic builder hypotheses for exp-axis equality, intended to be discharged
     in concrete models via Jensen/strict convexity arguments. Once both bounds
     are available, equality on the exp-axis follows. -/
@@ -479,6 +485,19 @@ instance (priority := 95) averagingBounds_of_jensen {F : ℝ → ℝ} [JensenSke
   mkAveragingBounds F (symm := (inferInstance : SymmUnit F))
     (upper := JensenSketch.axis_upper (F:=F))
     (lower := JensenSketch.axis_lower (F:=F))
+
+/-- Concrete template to build a `JensenSketch` instance from exp-axis bounds proven via
+    strict convexity/averaging on the log-axis. Provide symmetry (`SymmUnit F`) and the
+    two inequalities against the cosh-based benchmark; the equalities are then discharged
+    by rewriting with `Jcost_exp`. -/
+noncomputable def JensenSketch.of_log_bounds (F : ℝ → ℝ)
+  (symm : SymmUnit F)
+  (upper_log : ∀ t : ℝ, F (Real.exp t) ≤ ((Real.exp t + Real.exp (-t)) / 2 - 1))
+  (lower_log : ∀ t : ℝ, ((Real.exp t + Real.exp (-t)) / 2 - 1) ≤ F (Real.exp t)) :
+  JensenSketch F :=
+{ toSymmUnit := symm
+, axis_upper := by intro t; simpa [Jcost_exp] using upper_log t
+, axis_lower := by intro t; simpa [Jcost_exp] using lower_log t }
 
 theorem agree_on_exp_extends {F : ℝ → ℝ}
   (hAgree : AgreesOnExp F) : ∀ {x : ℝ}, 0 < x → F x = Jcost x := by
