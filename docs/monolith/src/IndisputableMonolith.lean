@@ -324,6 +324,14 @@ lemma diff_const_on_ReachN {δ : ℤ} {p q : Pot M}
         edge_diff_invariant (M:=M) (δ:=δ) (p:=p) (q:=q) hp hq hyz
       exact h_edge.trans ih
 
+/-- On reach components, the difference (p − q) equals its basepoint value. -/
+lemma diff_const_on_component {δ : ℤ} {p q : Pot M}
+  (hp : DE (M:=M) δ p) (hq : DE (M:=M) δ q) {x0 y : M.U}
+  (hreach : Causality.Reaches (Kin M) x0 y) :
+  (p y - q y) = (p x0 - q x0) := by
+  rcases hreach with ⟨n, h⟩
+  simpa using diff_const_on_ReachN (M:=M) (δ:=δ) (p:=p) (q:=q) hp hq (n:=n) (x:=x0) (y:=y) h
+
 /-- If two δ‑potentials agree at a basepoint, they agree on its n‑step reach set. -/
 theorem T4_unique_on_reachN {δ : ℤ} {p q : Pot M}
   (hp : DE (M:=M) δ p) (hq : DE (M:=M) δ q) {x0 : M.U}
@@ -349,6 +357,18 @@ theorem T4_unique_on_inBall {δ : ℤ} {p q : Pot M}
   (hin : Causality.inBall (Kin M) x0 n y) : p y = q y := by
   rcases hin with ⟨k, _, hreach⟩
   exact T4_unique_on_reachN (M:=M) (δ:=δ) (p:=p) (q:=q) hp hq (x0:=x0) hbase (n:=k) (y:=y) hreach
+
+/-- Componentwise uniqueness up to a constant: there exists `c` such that on the reach component of `x0`
+    we have `p y = q y + c` for all `y`. -/
+theorem T4_unique_up_to_const_on_component {δ : ℤ} {p q : Pot M}
+  (hp : DE (M:=M) δ p) (hq : DE (M:=M) δ q) {x0 : M.U} :
+  ∃ c : ℤ, ∀ {y : M.U}, Causality.Reaches (Kin M) x0 y → p y = q y + c := by
+  refine ⟨p x0 - q x0, ?_⟩
+  intro y hreach
+  have hdiff := diff_const_on_component (M:=M) (δ:=δ) (p:=p) (q:=q) hp hq (x0:=x0) (y:=y) hreach
+  -- rearrange `p y - q y = c` to `p y = q y + c`
+  simpa [add_comm, add_left_comm, add_assoc, sub_eq_add_neg] using
+    (eq_add_of_sub_eq hdiff)
 
 end Potential
 
