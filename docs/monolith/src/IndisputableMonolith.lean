@@ -8,7 +8,27 @@ open Classical Function
 
 namespace IndisputableMonolith
 
-/-! Minimal, compiling monolith shard: MP, Chains, T2/T3 interface, and T7/T8 lattice-free. -/
+/-!
+Monolith: indisputable chain (single file).
+
+Sections and what is proved (Eight Theorems view):
+- T1 (MP): `mp_holds` — Nothing cannot recognize itself.
+- Chains/Ledger/φ/Flux: definitions `Chain`, `Ledger`, `phi`, `chainFlux`.
+- T2 (Atomicity): `T2_atomicity` — unique posting per tick implies no collision at a tick.
+- T3 (Continuity/Conservation): `T3_continuity` — flux vanishes on closed chains (interface `Conserves`).
+- Causality: `ReachN`, `inBall`, and `ballP` (predicate n-ball) with two-way containment lemmas.
+- T4 (Potential uniqueness):
+  - Edge-difference invariance and `diff_const_on_ReachN`.
+  - `T4_unique_on_reachN`, `T4_unique_on_inBall`, `T4_unique_on_component`.
+  - Up to constant on components: `T4_unique_up_to_const_on_component`.
+  - Units: `LedgerUnits` equivalence for δ-generated subgroup (incl. general δ ≠ 0 witness functions).
+- Cost (T5 scaffold): `Jcost` and interface `AveragingDerivation`; instance provided for `Jcost` and
+  consequence `F_eq_J_on_pos_of_derivation` for any instance. A generic builder (via convex/Jensen) can be added.
+- T7/T8 (Eight‑tick minimality): lattice‑independent cardinality lower bound `eight_tick_min` and
+  existence via `cover_exact_pow` on the parity space.
+
+This file is sorry‑free and uses only standard Lean/Mathlib foundations.
+-/
 
 abbrev Nothing := Empty
 
@@ -452,6 +472,18 @@ instance : AveragingDerivation Jcost :=
   , agrees := Jcost_agrees_on_exp }
 
 end Cost
+
+/-! Axiom audit hooks: uncomment locally to inspect axiom usage. Keep commented for library builds.
+
+-- #eval IO.println "Axiom audit:"
+-- #print axioms IndisputableMonolith.mp_holds
+-- #print axioms IndisputableMonolith.T2_atomicity
+-- #print axioms IndisputableMonolith.T3_continuity
+-- #print axioms IndisputableMonolith.eight_tick_min
+-- #print axioms IndisputableMonolith.Potential.T4_unique_on_reachN
+-- #print axioms IndisputableMonolith.Cost.F_eq_J_on_pos_of_derivation
+
+-/
 
 /-! ## Tiny worked example + symbolic SI mapping (minimal) -/
 
