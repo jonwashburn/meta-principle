@@ -231,6 +231,44 @@ lemma inBall_mono {K : Kinematics α} {x y : α} {n m : Nat}
 
 end Causality
 
+/-! Finite out-degree light-cone: define a recursive n-ball (as a predicate) that contains every node
+    reachable in ≤ n steps. This avoids finite-set machinery while still giving the desired containment. -/
+namespace Causality
+
+variable {α : Type}
+
+/-- Graph-theoretic n-ball around x: nodes at distance ≤ n via the step relation. -/
+def ballP (K : Kinematics α) (x : α) : Nat → α → Prop
+| 0, y => y = x
+| Nat.succ n, y => ballP K x n y ∨ ∃ z, ballP K x n z ∧ K.step z y
+
+lemma ballP_mono {K : Kinematics α} {x : α} {n m : Nat}
+  (hnm : n ≤ m) : {y | ballP K x n y} ⊆ {y | ballP K x m y} := by
+  induction hnm with
+  | refl => intro y hy; simpa
+  | @step m hm ih =>
+      intro y hy
+      -- lift membership from n to n+1 via the left disjunct
+      exact Or.inl (ih hy)
+
+lemma reach_mem_ballP {K : Kinematics α} {x y : α} :
+  ∀ {n}, ReachN K n x y → ballP K x n y := by
+  intro n h; induction h with
+  | zero => simp [ballP]
+  | @succ n x y z hxy hyz ih =>
+      -- y is in ballP K x n; step y→z puts z into the next shell
+      exact Or.inr ⟨y, ih, hyz⟩
+
+lemma inBall_subset_ballP {K : Kinematics α} {x y : α} {n : Nat} :
+  inBall K x n y → ballP K x n y := by
+  intro ⟨k, hk, hreach⟩
+  have : ballP K x k y := reach_mem_ballP (K:=K) (x:=x) (y:=y) hreach
+  -- monotonicity in the radius
+  have mono := ballP_mono (K:=K) (x:=x) hk
+  exact mono this
+
+end Causality
+
 /-! ## T4 (potential uniqueness): placeholder for componentwise uniqueness (to keep build green). -/
 
 /-! ## T4 (potential uniqueness): potentials are unique on n-step reach sets (uses Causality.ReachN). -/
