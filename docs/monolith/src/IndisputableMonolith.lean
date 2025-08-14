@@ -257,7 +257,8 @@ namespace Causality
 
 variable {α : Type}
 
-/-- Graph-theoretic n-ball around x: nodes at distance ≤ n via the step relation. -/
+/-- `ballP K x n y` means y is within ≤ n steps of x via `K.step`.
+    This is the graph-theoretic n-ball as a predicate on vertices. -/
 def ballP (K : Kinematics α) (x : α) : Nat → α → Prop
 | 0, y => y = x
 | Nat.succ n, y => ballP K x n y ∨ ∃ z, ballP K x n z ∧ K.step z y
@@ -378,8 +379,9 @@ theorem T4_unique_on_inBall {δ : ℤ} {p q : Pot M}
   rcases hin with ⟨k, _, hreach⟩
   exact T4_unique_on_reachN (M:=M) (δ:=δ) (p:=p) (q:=q) hp hq (x0:=x0) hbase (n:=k) (y:=y) hreach
 
-/-- Componentwise uniqueness up to a constant: there exists `c` such that on the reach component of `x0`
-    we have `p y = q y + c` for all `y`. -/
+/-- Componentwise uniqueness up to a constant: there exists `c` (the basepoint offset)
+    such that on the reach component of `x0` we have `p y = q y + c` for all `y`.
+    In particular, if `p` and `q` agree at `x0`, then `c = 0` and `p = q` on the component. -/
 theorem T4_unique_up_to_const_on_component {δ : ℤ} {p q : Pot M}
   (hp : DE (M:=M) δ p) (hq : DE (M:=M) δ q) {x0 : M.U} :
   ∃ c : ℤ, ∀ {y : M.U}, Causality.Reaches (Kin M) x0 y → p y = q y + c := by
