@@ -448,6 +448,27 @@ instance (priority := 90) averagingDerivation_of_bounds {F : ℝ → ℝ} [Avera
   { toSymmUnit := (inferInstance : SymmUnit F)
   , agrees := agrees_on_exp_of_bounds (F:=F) }
 
+/-- Convenience constructor to package symmetry+unit and exp-axis bounds into `AveragingBounds`. -/
+def mkAveragingBounds (F : ℝ → ℝ)
+  (symm : SymmUnit F)
+  (upper : ∀ t : ℝ, F (Real.exp t) ≤ Jcost (Real.exp t))
+  (lower : ∀ t : ℝ, Jcost (Real.exp t) ≤ F (Real.exp t)) :
+  AveragingBounds F :=
+{ toSymmUnit := symm, upper := upper, lower := lower }
+
+/-- Jensen/strict-convexity sketch: this interface names the exact obligations typically
+    discharged via Jensen's inequality on the log-axis together with symmetry and F(1)=0.
+    Once provided (from your chosen convexity proof), it yields `AveragingBounds`. -/
+class JensenSketch (F : ℝ → ℝ) extends SymmUnit F : Prop where
+  axis_upper : ∀ t : ℝ, F (Real.exp t) ≤ Jcost (Real.exp t)
+  axis_lower : ∀ t : ℝ, Jcost (Real.exp t) ≤ F (Real.exp t)
+
+instance (priority := 95) averagingBounds_of_jensen {F : ℝ → ℝ} [JensenSketch F] :
+  AveragingBounds F :=
+  mkAveragingBounds F (symm := (inferInstance : SymmUnit F))
+    (upper := JensenSketch.axis_upper (F:=F))
+    (lower := JensenSketch.axis_lower (F:=F))
+
 theorem agree_on_exp_extends {F : ℝ → ℝ}
   (hAgree : AgreesOnExp F) : ∀ {x : ℝ}, 0 < x → F x = Jcost x := by
   intro x hx
