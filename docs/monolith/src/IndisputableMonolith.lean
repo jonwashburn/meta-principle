@@ -267,6 +267,27 @@ lemma inBall_subset_ballP {K : Kinematics α} {x y : α} {n : Nat} :
   have mono := ballP_mono (K:=K) (x:=x) hk
   exact mono this
 
+lemma ballP_subset_inBall {K : Kinematics α} {x y : α} :
+  ∀ {n}, ballP K x n y → inBall K x n y := by
+  intro n
+  induction n generalizing y with
+  | zero =>
+      intro hy
+      -- at radius 0, membership means y = x
+      rcases hy with rfl
+      exact ⟨0, le_rfl, ReachN.zero⟩
+  | succ n ih =>
+      intro hy
+      cases hy with
+      | inl hy' =>
+          -- lift inclusion from n to n+1
+          rcases ih hy' with ⟨k, hk, hkreach⟩
+          exact ⟨k, Nat.le_trans hk (Nat.le_succ _), hkreach⟩
+      | inr h' =>
+          rcases h' with ⟨z, hz, hstep⟩
+          rcases ih hz with ⟨k, hk, hkreach⟩
+          exact ⟨k + 1, Nat.succ_le_succ hk, ReachN.succ hkreach hstep⟩
+
 end Causality
 
 /-! ## T4 (potential uniqueness): placeholder for componentwise uniqueness (to keep build green). -/
