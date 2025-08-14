@@ -416,6 +416,13 @@ lemma Jcost_symm {x : ℝ} (hx : 0 < x) : Jcost x = Jcost x⁻¹ := by
 
 def AgreesOnExp (F : ℝ → ℝ) : Prop := ∀ t : ℝ, F (Real.exp t) = Jcost (Real.exp t)
 
+/-- Expansion on the exp-axis: write `Jcost (exp t)` as a symmetric average of `exp t` and `exp (−t)`. -/
+@[simp] lemma Jcost_exp (t : ℝ) :
+  Jcost (Real.exp t) = ((Real.exp t) + (Real.exp (-t))) / 2 - 1 := by
+  have h : (Real.exp t)⁻¹ = Real.exp (-t) := by
+    symm; simpa using Real.exp_neg t
+  simp [Jcost, h]
+
 /-- Symmetry and unit normalization interface for a candidate cost. -/
 class SymmUnit (F : ℝ → ℝ) : Prop where
   symmetric : ∀ {x}, 0 < x → F x = F x⁻¹
@@ -425,7 +432,9 @@ class SymmUnit (F : ℝ → ℝ) : Prop where
 class AveragingAgree (F : ℝ → ℝ) : Prop where
   agrees : AgreesOnExp F
 
-/-- Convex-averaging derivation hook: a typeclass that asserts symmetry+unit and yields exp-axis agreement. -/
+/-- Convex-averaging derivation hook: a typeclass that asserts symmetry+unit and yields exp-axis agreement.
+    In practice, the agreement comes from Jensen/strict-convexity arguments applied to the log axis,
+    using that `Jcost (exp t)` is the even function `(exp t + exp (−t))/2 − 1` (see `Jcost_exp`). -/
 class AveragingDerivation (F : ℝ → ℝ) extends SymmUnit F : Prop where
   agrees : AgreesOnExp F
 
