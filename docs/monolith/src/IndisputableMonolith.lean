@@ -196,26 +196,41 @@ noncomputable def equiv_delta (δ : ℤ) (hδ : δ ≠ 0) : DeltaSub δ ≃ ℤ 
 
 end LedgerUnits
 
-/-! ## T4 (potential uniqueness): double‑entry potentials are unique up to constant on reach components. -/
+/-! ## Causality: n-step reachability and an n-ball light-cone bound (definition-level). -/
+namespace Causality
+
+variable {α : Type}
+
+structure Kinematics (α : Type) where
+  step : α → α → Prop
+
+inductive ReachN (K : Kinematics α) : Nat → α → α → Prop
+| zero {x} : ReachN K 0 x x
+| succ {n x y z} : ReachN K n x y → K.step y z → ReachN K (n+1) x z
+
+def inBall (K : Kinematics α) (x : α) (n : Nat) (y : α) : Prop :=
+  ∃ k ≤ n, ReachN K k x y
+
+lemma reach_in_ball {K : Kinematics α} {x y : α} {n : Nat}
+  (h : ReachN K n x y) : inBall K x n y := ⟨n, le_rfl, h⟩
+
+lemma reach_le_in_ball {K : Kinematics α} {x y : α} {k n : Nat}
+  (hk : k ≤ n) (h : ReachN K k x y) : inBall K x n y := ⟨k, hk, h⟩
+
+end Causality
+
+/-! ## T4 (potential uniqueness): placeholder for componentwise uniqueness (to keep build green). -/
+
+/-! ## T4 (potential uniqueness): potentials are unique on n-step reach sets (uses Causality.ReachN). -/
 namespace Potential
 
 variable {M : RecognitionStructure}
 
 abbrev Pot (M : RecognitionStructure) := M.U → ℤ
 
-/-- Double‑entry rule at resolution δ: every recognized step raises potential by δ. -/
 def DE (δ : ℤ) (p : Pot M) : Prop := ∀ {a b}, M.R a b → p b - p a = δ
 
-/-- Forward reachability (reflexive–transitive closure) of the recognition step. -/
-inductive Reach : M.U → M.U → Prop
-| refl {x} : Reach x x
-| step {x y z} : Reach x y → M.R y z → Reach x z
-
-namespace Reach
-  infix:50 " ⟶* " => Reach
-end Reach
-
-open Reach
+def Kin (M : RecognitionStructure) : Causality.Kinematics M.U := { step := M.R }
 
 /-- On each edge, the difference (p − q) is invariant if both satisfy the same δ rule. -/
 lemma edge_diff_invariant {δ : ℤ} {p q : Pot M}
@@ -226,27 +241,35 @@ lemma edge_diff_invariant {δ : ℤ} {p q : Pot M}
   have : (p b - q b) - (p a - q a) = 0 := by simpa [harr, hδ]
   exact sub_eq_zero.mp this
 
-/-- The difference (p − q) is constant along forward reachability. -/
-lemma diff_const_on_reach {δ : ℤ} {p q : Pot M}
+/-- The difference (p − q) is constant along any n‑step reach. -/
+lemma diff_const_on_ReachN {δ : ℤ} {p q : Pot M}
   (hp : DE (M:=M) δ p) (hq : DE (M:=M) δ q) :
-  ∀ x y, Reach x y → (p y - q y) = (p x - q x) := by
-  intro x y h
+  ∀ {n x y}, Causality.ReachN (Kin M) n x y → (p y - q y) = (p x - q x) := by
+  intro n x y h
   induction h with
-  | @refl x => simp
-  | @step x y z hxy hyz ih =>
+  | zero => rfl
+  | @succ n x y z hxy hyz ih =>
       have h_edge : (p z - q z) = (p y - q y) :=
         edge_diff_invariant (M:=M) (δ:=δ) (p:=p) (q:=q) hp hq hyz
       exact h_edge.trans ih
 
-/-- If two δ‑potentials agree at a basepoint, they agree everywhere in its forward reach component. -/
-theorem T4_unique_on_component {δ : ℤ} {p q : Pot M}
+/-- If two δ‑potentials agree at a basepoint, they agree on its n‑step reach set. -/
+theorem T4_unique_on_reachN {δ : ℤ} {p q : Pot M}
   (hp : DE (M:=M) δ p) (hq : DE (M:=M) δ q) {x0 : M.U}
-  (hbase : p x0 = q x0) : ∀ {y}, Reach x0 y → p y = q y := by
-  intro y hy
-  have hdiff := diff_const_on_reach (M:=M) (δ:=δ) hp hq x0 y hy
+  (hbase : p x0 = q x0) : ∀ {n y}, Causality.ReachN (Kin M) n x0 y → p y = q y := by
+  intro n y h
+  have hdiff := diff_const_on_ReachN (M:=M) (δ:=δ) (p:=p) (q:=q) hp hq h
   have : p x0 - q x0 = 0 := by simpa [hbase]
   have : p y - q y = 0 := by simpa [this] using hdiff
   simpa using sub_eq_zero.mp this
+
+/-- If y lies in the n-ball around x0, then the two δ-potentials agree at y. -/
+theorem T4_unique_on_inBall {δ : ℤ} {p q : Pot M}
+  (hp : DE (M:=M) δ p) (hq : DE (M:=M) δ q) {x0 y : M.U}
+  (hbase : p x0 = q x0) {n : Nat}
+  (hin : Causality.inBall (Kin M) x0 n y) : p y = q y := by
+  rcases hin with ⟨k, _, hreach⟩
+  exact T4_unique_on_reachN (M:=M) (δ:=δ) (p:=p) (q:=q) hp hq (x0:=x0) hbase (n:=k) (y:=y) hreach
 
 end Potential
 
@@ -272,6 +295,10 @@ lemma Jcost_symm {x : ℝ} (hx : 0 < x) : Jcost x = Jcost x⁻¹ := by
 
 def AgreesOnExp (F : ℝ → ℝ) : Prop := ∀ t : ℝ, F (Real.exp t) = Jcost (Real.exp t)
 
+/-- Interface: supply the averaging argument as a typeclass to obtain exp-axis agreement. -/
+class AveragingAgree (F : ℝ → ℝ) : Prop where
+  agrees : AgreesOnExp F
+
 theorem agree_on_exp_extends {F : ℝ → ℝ}
   (hAgree : AgreesOnExp F) : ∀ {x : ℝ}, 0 < x → F x = Jcost x := by
   intro x hx
@@ -283,6 +310,11 @@ theorem F_eq_J_on_pos {F : ℝ → ℝ}
   (hAgree : AgreesOnExp F) :
   ∀ {x : ℝ}, 0 < x → F x = Jcost x :=
   agree_on_exp_extends (F:=F) hAgree
+
+/-- Convenience: if averaging agreement is provided as an instance, conclude F = J on ℝ_{>0}. -/
+theorem F_eq_J_on_pos_of_averaging {F : ℝ → ℝ} [AveragingAgree F] :
+  ∀ {x : ℝ}, 0 < x → F x = Jcost x :=
+  F_eq_J_on_pos (hAgree := AveragingAgree.agrees (F:=F))
 
 end Cost
 
