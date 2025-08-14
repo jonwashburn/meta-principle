@@ -6,6 +6,9 @@
 /build/
 /lake-packages/
 /lake-manifest.json
+/.lake/
+docs/monolith/.lake/
+IndisputableChain/.lake/
 /.elan/
 
 # Editor
