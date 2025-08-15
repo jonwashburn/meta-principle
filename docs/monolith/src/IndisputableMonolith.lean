@@ -492,6 +492,13 @@ lemma Jcost_symm {x : ℝ} (hx : 0 < x) : Jcost x = Jcost x⁻¹ := by
     ring
   simpa [Jcost, this]
 
+lemma Jcost_as_half (x : ℝ) : Jcost x = (1/2) * (x + x⁻¹) - 1 := by
+  -- (x + x⁻¹)/2 = (x + x⁻¹) * (1/2)
+  have : (x + x⁻¹) / 2 = (x + x⁻¹) * (1/2) := by
+    simpa [div_eq_mul_inv, one_div]
+  -- commute to get (1/2) * (x + x⁻¹)
+  simpa [Jcost, this, mul_comm]
+
 def AgreesOnExp (F : ℝ → ℝ) : Prop := ∀ t : ℝ, F (Real.exp t) = Jcost (Real.exp t)
 
 /-- Expansion on the exp-axis: write `Jcost (exp t)` as a symmetric average of `exp t` and `exp (−t)`. -/
