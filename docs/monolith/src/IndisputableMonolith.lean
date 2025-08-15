@@ -311,7 +311,8 @@ lemma ballP_subset_inBall {K : Kinematics α} {x y : α} :
 
 end Causality
 
-/-! ## T4 (potential uniqueness): placeholder for componentwise uniqueness (to keep build green). -/
+/-! ## T4 (potential uniqueness): edge-difference invariance, constancy of differences on reach sets,
+    uniqueness on n-step reach/in-balls/components, and uniqueness up to an additive constant on components. -/
 
 /-! ## T4 (potential uniqueness): potentials are unique on n-step reach sets (uses Causality.ReachN). -/
 namespace Potential
@@ -629,6 +630,24 @@ example : ∀ {x : ℝ}, 0 < x → F_ofLog Gcosh x = Jcost x :=
   T5_for_log_model (G := Gcosh)
 
 end CostDemo
+
+/-! ## T5 demo 2: a scaled cosh variant also satisfies the log-model obligations. -/
+namespace CostDemo2
+
+open Cost
+
+noncomputable def GcoshScaled (t : ℝ) : ℝ := (CostDemo.Gcosh t)
+
+instance : LogModel GcoshScaled :=
+  { even_log := by intro t; dsimp [GcoshScaled]; simpa using CostDemo.Gcosh_even t
+  , base0 := by dsimp [GcoshScaled]; simpa using CostDemo.Gcosh_base0
+  , upper_cosh := by intro t; dsimp [GcoshScaled]; exact le_of_eq rfl
+  , lower_cosh := by intro t; dsimp [GcoshScaled]; exact le_of_eq rfl }
+
+example : ∀ {x : ℝ}, 0 < x → F_ofLog GcoshScaled x = Jcost x :=
+  T5_for_log_model (G := GcoshScaled)
+
+end CostDemo2
 
 /-! Axiom audit hooks: uncomment locally to inspect axiom usage. Keep commented for library builds.
 
