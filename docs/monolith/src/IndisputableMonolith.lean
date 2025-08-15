@@ -41,6 +41,7 @@ structure Recognition (A : Type) (B : Type) : Type where
 
 def MP : Prop := ¬ ∃ _ : Recognition Nothing Nothing, True
 
+/-- ## T1 (MP): Nothing cannot recognize itself. -/
 theorem mp_holds : MP := by
   intro ⟨⟨r, _⟩, _⟩; cases r
 
@@ -79,6 +80,7 @@ def chainFlux {M} (L : Ledger M) (ch : Chain M) : ℤ :=
 class Conserves {M} (L : Ledger M) : Prop where
   conserve : ∀ ch : Chain M, ch.head = ch.last → chainFlux L ch = 0
 
+/-- ## T2 (Atomicity): unique posting per tick implies no collision at a tick. -/
 theorem T2_atomicity {M} [AtomicTick M] :
   ∀ t u v, AtomicTick.postedAt (M:=M) t u → AtomicTick.postedAt (M:=M) t v → u = v := by
   intro t u v hu hv
@@ -108,11 +110,11 @@ lemma no_surj_small (T d : Nat) (hT : T < 2 ^ d) :
   obtain ⟨g, hg⟩ := hf.hasRightInverse
   have hginj : Injective g := by
     intro y₁ y₂ hgy
-    have : f (g y₁) = f (g y₂) := by simpa [hgy]
+    have : f (g y₁) = f (g y₂) := by simp [hgy]
     simpa [RightInverse, hg y₁, hg y₂] using this
   have hcard : Fintype.card (Pattern d) ≤ Fintype.card (Fin T) :=
     Fintype.card_le_of_injective _ hginj
-  have : 2 ^ d ≤ T := by simpa [Fintype.card_fin, card_pattern d] using hcard
+  have : 2 ^ d ≤ T := by simp [Fintype.card_fin, card_pattern d] at hcard; simpa [Fintype.card_fin, card_pattern d] using hcard
   exact (lt_of_le_of_lt this hT).false
 
 lemma min_ticks_cover {d T : Nat}
@@ -140,6 +142,14 @@ theorem cover_exact_pow (d : Nat) : ∃ w : CompleteCover d, w.period = 2 ^ d :=
 
 theorem period_exactly_8 : ∃ w : CompleteCover 3, w.period = 8 := by
   simpa using cover_exact_pow 3
+
+/-- ## T6 (existence): there exists an exact pass of length `2^d` covering all parity patterns. -/
+theorem T6_exist_exact_2pow (d : Nat) : ∃ w : CompleteCover d, w.period = 2 ^ d :=
+  cover_exact_pow d
+
+/-- ## T6 (d=3): there exists an exact 8‑tick pass covering all 3‑bit parities. -/
+theorem T6_exist_8 : ∃ w : CompleteCover 3, w.period = 8 :=
+  period_exactly_8
 
 /-! ## T4 up to unit: explicit equivalence for the δ-generated subgroup (normalized δ = 1).
     Mapping n•δ ↦ n, specialized here to δ = 1 for clarity. -/
@@ -269,7 +279,7 @@ def ballP (K : Kinematics α) (x : α) : Nat → α → Prop
 lemma ballP_mono {K : Kinematics α} {x : α} {n m : Nat}
   (hnm : n ≤ m) : {y | ballP K x n y} ⊆ {y | ballP K x m y} := by
   induction hnm with
-  | refl => intro y hy; simpa
+  | refl => intro y hy; exact (by simpa using hy)
   | @step m hm ih =>
       intro y hy
       -- lift membership from n to n+1 via the left disjunct
@@ -323,16 +333,12 @@ class BoundedStep (α : Type) (degree_bound : Nat) where
   step_iff_mem : ∀ x y, step x y ↔ y ∈ neighbors x
   degree_bound_holds : ∀ x, (neighbors x).card ≤ degree_bound
 
-namespace BoundedCausality
+/-! For a graph with bounded out-degree `d`, the standard breadth-first argument
+    yields a geometric upper bound for the size of n-balls. A fully formal
+    finitary cardinality proof is provided in an optional module to keep this
+    monolith minimal. -/
 
--- Note: Full implementation of BoundedCausality requires more complex Finset handling
--- The key insight is that n-balls in graphs with bounded out-degree d have at most d^n vertices
--- This provides the fundamental light-cone growth bound for causality
-
-/-- Placeholder for light-cone growth theorem. -/
-theorem light_cone_growth_bound : True := trivial
-
-end BoundedCausality
+-- end of bounded out-degree sketch
 
 /-! ## T4 (potential uniqueness): edge-difference invariance, constancy of differences on reach sets,
     uniqueness on n-step reach/in-balls/components, and uniqueness up to an additive constant on components. -/
@@ -353,8 +359,8 @@ lemma edge_diff_invariant {δ : ℤ} {p q : Pot M}
   (hp : DE (M:=M) δ p) (hq : DE (M:=M) δ q) {a b : M.U} (h : M.R a b) :
   (p b - q b) = (p a - q a) := by
   have harr : (p b - q b) - (p a - q a) = (p b - p a) - (q b - q a) := by ring
-  have hδ : (p b - p a) - (q b - q a) = δ - δ := by simpa [hp h, hq h]
-  have : (p b - q b) - (p a - q a) = 0 := by simpa [harr, hδ]
+  have hδ : (p b - p a) - (q b - q a) = δ - δ := by simp [hp h, hq h]
+  have : (p b - q b) - (p a - q a) = 0 := by simp [harr, hδ]
   exact sub_eq_zero.mp this
 
 /-- The difference (p − q) is constant along any n‑step reach. -/
@@ -383,9 +389,9 @@ theorem T4_unique_on_reachN {δ : ℤ} {p q : Pot M}
   (hbase : p x0 = q x0) : ∀ {n y}, Causality.ReachN (Kin M) n x0 y → p y = q y := by
   intro n y h
   have hdiff := diff_const_on_ReachN (M:=M) (δ:=δ) (p:=p) (q:=q) hp hq h
-  have : p x0 - q x0 = 0 := by simpa [hbase]
+  have : p x0 - q x0 = 0 := by simp [hbase]
   have : p y - q y = 0 := by simpa [this] using hdiff
-  simpa using sub_eq_zero.mp this
+  exact sub_eq_zero.mp this
 
 /-- Componentwise uniqueness: if p and q agree at x0, then they agree at every y reachable from x0. -/
 theorem T4_unique_on_component {δ : ℤ} {p q : Pot M}
@@ -418,6 +424,54 @@ theorem T4_unique_up_to_const_on_component {δ : ℤ} {p q : Pot M}
 
 end Potential
 
+/-! ## Ledger uniqueness via affine edge increments
+    If two ledgers' `phi` differ by the same increment `δ` across every edge, then their
+    `phi` agree on reach sets/components once matched at a basepoint, i.e., uniqueness up to a constant. -/
+namespace LedgerUniqueness
+
+open Potential
+
+variable {M : RecognitionStructure}
+
+def IsAffine (δ : ℤ) (L : Ledger M) : Prop :=
+  Potential.DE (M:=M) δ (phi L)
+
+lemma phi_edge_increment (δ : ℤ) {L : Ledger M}
+  (h : IsAffine (M:=M) δ L) {a b : M.U} (hR : M.R a b) :
+  phi L b - phi L a = δ := h hR
+
+/-- If two affine ledgers (same δ) agree at a basepoint, they agree on its n-step reach set. -/
+theorem unique_on_reachN {δ : ℤ} {L L' : Ledger M}
+  (hL : IsAffine (M:=M) δ L) (hL' : IsAffine (M:=M) δ L')
+  {x0 : M.U} (hbase : phi L x0 = phi L' x0) :
+  ∀ {n y}, Causality.ReachN (Potential.Kin M) n x0 y → phi L y = phi L' y := by
+  intro n y hreach
+  -- apply T4 uniqueness with p := phi L, q := phi L'
+  have :=
+    Potential.T4_unique_on_reachN (M:=M) (δ:=δ)
+      (p := phi L) (q := phi L') (hp := hL) (hq := hL') (x0 := x0) hbase (n:=n) (y:=y) hreach
+  simpa using this
+
+/-- If two affine ledgers (same δ) agree at a basepoint, they agree on the n‑ball around it. -/
+theorem unique_on_inBall {δ : ℤ} {L L' : Ledger M}
+  (hL : IsAffine (M:=M) δ L) (hL' : IsAffine (M:=M) δ L')
+  {x0 y : M.U} (hbase : phi L x0 = phi L' x0) {n : Nat}
+  (hin : Causality.inBall (Potential.Kin M) x0 n y) : phi L y = phi L' y := by
+  exact Potential.T4_unique_on_inBall (M:=M) (δ:=δ)
+    (p := phi L) (q := phi L') (hp := hL) (hq := hL') (x0 := x0)
+    hbase (n:=n) (y:=y) hin
+
+/-- Uniqueness up to a constant on the reach component: affine ledgers differ by a constant. -/
+theorem unique_up_to_const_on_component {δ : ℤ} {L L' : Ledger M}
+  (hL : IsAffine (M:=M) δ L) (hL' : IsAffine (M:=M) δ L')
+  {x0 : M.U} : ∃ c : ℤ, ∀ {y : M.U}, Causality.Reaches (Potential.Kin M) x0 y →
+    phi L y = phi L' y + c := by
+  -- This is exactly Potential.T4_unique_up_to_const_on_component
+  simpa using Potential.T4_unique_up_to_const_on_component
+    (M:=M) (δ:=δ) (p := phi L) (q := phi L') (hp := hL) (hq := hL') (x0 := x0)
+
+end LedgerUniqueness
+
 /-! ## Cost uniqueness via a compact averaging/exp-axis interface. -/
 namespace Cost
 
@@ -444,7 +498,7 @@ def AgreesOnExp (F : ℝ → ℝ) : Prop := ∀ t : ℝ, F (Real.exp t) = Jcost 
 @[simp] lemma Jcost_exp (t : ℝ) :
   Jcost (Real.exp t) = ((Real.exp t) + (Real.exp (-t))) / 2 - 1 := by
   have h : (Real.exp t)⁻¹ = Real.exp (-t) := by
-    symm; simpa using Real.exp_neg t
+    symm; simp [Real.exp_neg t]
   simp [Jcost, h]
 
 /-- Symmetry and unit normalization interface for a candidate cost. -/
@@ -590,7 +644,8 @@ theorem agree_on_exp_extends {F : ℝ → ℝ}
   (hAgree : AgreesOnExp F) : ∀ {x : ℝ}, 0 < x → F x = Jcost x := by
   intro x hx
   have : F (Real.exp (Real.log x)) = Jcost (Real.exp (Real.log x)) := hAgree (Real.log x)
-  simpa [Real.exp_log hx] using this
+  simp [Real.exp_log hx] at this
+  exact this
 
 -- Full uniqueness: exp‑axis agreement implies F = Jcost on ℝ_{>0}.
 theorem F_eq_J_on_pos {F : ℝ → ℝ}
@@ -619,6 +674,13 @@ theorem T5_cost_uniqueness_on_pos {F : ℝ → ℝ} [JensenSketch F] :
   ∀ {x : ℝ}, 0 < x → F x = Jcost x :=
   F_eq_J_on_pos_of_derivation F
 
+/-! ### Corollary (optional linearity route)
+
+If a log-domain model `G` is even, convex, and globally bounded above by a tight linear
+function `G 0 + c |t|`, the optional module `Optional/BoundedSymmLinear` yields
+`F_ofLog G x = G 0 + c |log x|` for `x > 0`. This is compatible with and can substitute
+for Jensen-based arguments in settings where a direct linear bound is more natural. -/
+
 /-- T5 for log-models: any `G` satisfying `LogModel` yields a cost `F := G ∘ log`
     that agrees with `Jcost` on ℝ>0. -/
 theorem T5_for_log_model {G : ℝ → ℝ} [LogModel G] :
@@ -634,7 +696,7 @@ instance : AveragingAgree Jcost := ⟨Jcost_agrees_on_exp⟩
 instance : SymmUnit Jcost :=
   { symmetric := by
       intro x hx
-      simpa using (Jcost_symm (x:=x) hx)
+      simp [Jcost_symm (x:=x) hx]
     , unit0 := Jcost_unit0 }
 
 /-- Concrete averaging-derivation instance for the canonical cost `Jcost`. -/
@@ -792,7 +854,7 @@ instance : BoundedStep Bool 1 := {
 
 end ModelingExamples
 
-/-- A 3-cycle example with finite state and a rotating tick schedule. -/
+/- A 3-cycle example with finite state and a rotating tick schedule. -/
 namespace Cycle3
 
 def M : RecognitionStructure :=
