@@ -522,89 +522,10 @@ Sketch:
 
 Note: The monolith already includes a fully working path via `LogModel` and the concrete `Gcosh` demos.
 This section documents how to tighten to a purely convex-analytic derivation in a future pass without
-introducing axioms or `sorry`.
+introducing axioms. To keep this monolith sorry‑free and robust across mathlib versions, we omit the
+curvature‑normalization builder here. The T5 results below proceed via the `LogModel`/`JensenSketch`
+interfaces, which are fully proved and stable.
 -/
-
-/-- Curvature-normalized convex functions: even, vanish at 0, convex, C² with G''(0) = 1 -/
-class CurvatureNormalized (G : ℝ → ℝ) : Prop where
-  even : ∀ t, G (-t) = G t
-  zero_at_origin : G 0 = 0
-  convex : ConvexOn ℝ Set.univ G
-  smooth_at_zero : ContDiffAt ℝ 2 G 0
-  first_deriv_zero : deriv G 0 = 0  -- follows from evenness but stated explicitly
-  second_deriv_one : (deriv^[2] G) 0 = 1
-
-/-- The benchmark function H(t) = (e^t + e^(-t))/2 - 1 = cosh(t) - 1 -/
-noncomputable def benchmarkH (t : ℝ) : ℝ := (Real.exp t + Real.exp (-t)) / 2 - 1
-
-lemma benchmarkH_eq_cosh_sub_one (t : ℝ) : benchmarkH t = Real.cosh t - 1 := by
-  simp [benchmarkH, Real.cosh_eq]
-
-/-- Key lemma: curvature-normalized convex G satisfies G(t) ≤ H(t) -/
-lemma curvature_normalized_upper_bound (G : ℝ → ℝ) [CurvatureNormalized G] (t : ℝ) :
-    G t ≤ benchmarkH t := by
-  -- Both G and benchmarkH are convex, even, vanish at 0, and have G''(0) = H''(0) = 1
-  -- By convexity and the matching curvature at 0, G ≤ benchmarkH everywhere
-  -- This follows from the fact that benchmarkH is the "minimal" convex even function
-  -- with these properties (it's the convex hull of the quadratic approximation)
-  sorry -- Full proof requires detailed Taylor remainder analysis
-
-/-- Key lemma: curvature-normalized convex G satisfies H(t) ≤ G(t) -/
-lemma curvature_normalized_lower_bound (G : ℝ → ℝ) [CurvatureNormalized G] (t : ℝ) :
-    benchmarkH t ≤ G t := by
-  -- This is the harder direction: we need to show benchmarkH is a lower bound
-  -- The key insight is that benchmarkH = cosh(t) - 1 is strictly convex,
-  -- while G is only convex. The curvature normalization G''(0) = 1 ensures
-  -- that G cannot "dip below" benchmarkH near 0, and convexity propagates this globally.
-  sorry -- Full proof requires showing benchmarkH is the maximal function with these properties
-
-/-- Instance: benchmarkH itself is curvature-normalized -/
-instance : CurvatureNormalized benchmarkH := by
-  constructor
-  · -- even: benchmarkH(-t) = benchmarkH(t)
-    intro t
-    simp [benchmarkH]
-    ring
-  · -- zero_at_origin: benchmarkH(0) = 0
-    simp [benchmarkH]
-  · -- convex: ConvexOn ℝ Set.univ benchmarkH
-    -- benchmarkH(t) = (e^t + e^(-t))/2 - 1 = cosh(t) - 1, and cosh is convex
-    sorry -- Requires Real.convexOn_cosh from Mathlib
-  · -- smooth_at_zero: ContDiffAt ℝ 2 benchmarkH 0
-    -- cosh is smooth everywhere, so benchmarkH = cosh - 1 is smooth at 0
-    sorry -- Requires Real.contDiffAt_cosh from Mathlib
-  · -- first_deriv_zero: deriv benchmarkH 0 = 0
-    -- deriv(cosh - 1) = sinh, and sinh(0) = 0
-    sorry -- Requires Real.deriv_cosh and Real.sinh_zero
-  · -- second_deriv_one: (deriv^[2] benchmarkH) 0 = 1
-    -- deriv(sinh) = cosh, and cosh(0) = 1
-    sorry -- Requires Real.deriv_sinh and Real.cosh_zero
-
-/-- SymmUnit instance for curvature-normalized G cost F(x) := G(log x) -/
-instance curvatureNormalized_to_symmUnit (G : ℝ → ℝ) [CurvatureNormalized G] :
-    SymmUnit (fun x => G (Real.log x)) := by
-  constructor
-  · -- symm: F(-x) = F(x) follows from G(-log x) = G(log x)
-    intro x hx
-    rw [Real.log_inv]
-    exact (@CurvatureNormalized.even G _ (Real.log x)).symm
-  · -- unit: F(1) = 0 follows from G(0) = 0
-    simp [CurvatureNormalized.zero_at_origin]
-
-/-- Builder: curvature-normalized G gives JensenSketch for the cost F(x) := G(log x) -/
-instance curvatureNormalized_to_jensenSketch (G : ℝ → ℝ) [CurvatureNormalized G] :
-    JensenSketch (fun x => G (Real.log x)) := by
-  constructor
-  · -- axis_upper: F(exp t) ≤ J(exp t)
-    intro t
-    simp only [Jcost_exp]
-    rw [Real.log_exp]
-    exact curvature_normalized_upper_bound G t
-  · -- axis_lower: J(exp t) ≤ F(exp t)
-    intro t
-    simp only [Jcost_exp]
-    rw [Real.log_exp]
-    exact curvature_normalized_lower_bound G t
 
 instance (priority := 95) averagingBounds_of_jensen {F : ℝ → ℝ} [JensenSketch F] :
   AveragingBounds F :=
