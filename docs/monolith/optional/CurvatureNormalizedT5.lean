@@ -80,5 +80,3 @@ instance curvatureNormalized_to_jensenSketch (G : ℝ → ℝ) [CurvatureNormali
 end CurvatureT5
 
 end IndisputableMonolith
-
-
