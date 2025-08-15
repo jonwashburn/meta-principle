@@ -603,6 +603,33 @@ instance : JensenSketch Jcost :=
 
 end Cost
 
+/-! ## T5 demo: a concrete `G` witnessing the log-model obligations. -/
+namespace CostDemo
+
+open Cost
+
+noncomputable def Gcosh (t : ℝ) : ℝ := ((Real.exp t + Real.exp (-t)) / 2 - 1)
+
+lemma Gcosh_even : ∀ t : ℝ, Gcosh (-t) = Gcosh t := by
+  intro t
+  -- ((e^{-t} + e^{--t})/2 - 1) = ((e^t + e^{-t})/2 - 1)
+  simpa [Gcosh, add_comm] using rfl
+
+lemma Gcosh_base0 : Gcosh 0 = 0 := by
+  simp [Gcosh]
+
+instance : LogModel Gcosh :=
+  { even_log := Gcosh_even
+  , base0 := Gcosh_base0
+  , upper_cosh := by intro t; exact le_of_eq rfl
+  , lower_cosh := by intro t; exact le_of_eq rfl }
+
+-- End-to-end T5: for x > 0, F_ofLog Gcosh x = Jcost x
+example : ∀ {x : ℝ}, 0 < x → F_ofLog Gcosh x = Jcost x :=
+  T5_for_log_model (G := Gcosh)
+
+end CostDemo
+
 /-! Axiom audit hooks: uncomment locally to inspect axiom usage. Keep commented for library builds.
 
 -- #eval IO.println "Axiom audit:"
