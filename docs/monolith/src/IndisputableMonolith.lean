@@ -3,6 +3,7 @@ import Mathlib.Data.Fintype.Card
 import Mathlib.Data.Fin.Basic
 import Mathlib.Tactic
 import Mathlib.Data.Int.Basic
+import Mathlib.Analysis.Convex.Function
 
 open Classical Function
 
@@ -480,6 +481,27 @@ def mkAveragingBounds (F : ℝ → ℝ)
 class JensenSketch (F : ℝ → ℝ) extends SymmUnit F : Prop where
   axis_upper : ∀ t : ℝ, F (Real.exp t) ≤ Jcost (Real.exp t)
   axis_lower : ∀ t : ℝ, Jcost (Real.exp t) ≤ F (Real.exp t)
+
+/-
+### Convexity/Jensen route (sketch)
+
+Let `G : ℝ → ℝ` be even (`G (-t) = G t`), `G 0 = 0`, and convex on ℝ (`ConvexOn ℝ Set.univ G`).
+Set `F x := G (Real.log x)` for `x > 0` and define the benchmark `H t := ((Real.exp t + Real.exp (-t))/2 - 1)`.
+
+Goal: derive `G t ≤ H t` and `H t ≤ G t` for all `t`, which supply the two `AveragingBounds` obligations
+for `F` on the exp-axis via `Jcost_exp`.
+
+Sketch:
+- `H` is even and strictly convex on ℝ (standard analysis facts). The midpoint inequality yields
+  `H(θ a + (1-θ) b) < θ H(a) + (1-θ) H(b)` for `a ≠ b`, `θ ∈ (0,1)`.
+- Evenness and `G 0 = 0` let us compare values on the symmetric segment `[-t, t]` using Jensen.
+- With appropriate tangent/normalization conditions (e.g., slope at 0 or a calibration at endpoints),
+  convexity pins `G` to `H` on each symmetric segment, yielding the desired two-sided bounds.
+
+Note: The monolith already includes a fully working path via `LogModel` and the concrete `Gcosh` demos.
+This section documents how to tighten to a purely convex-analytic derivation in a future pass without
+introducing axioms or `sorry`.
+-/
 
 instance (priority := 95) averagingBounds_of_jensen {F : ℝ → ℝ} [JensenSketch F] :
   AveragingBounds F :=
