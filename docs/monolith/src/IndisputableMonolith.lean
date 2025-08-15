@@ -526,6 +526,12 @@ theorem F_eq_J_on_pos_of_derivation (F : ℝ → ℝ) [AveragingDerivation F] :
   ∀ {x : ℝ}, 0 < x → F x = Jcost x :=
   F_eq_J_on_pos (hAgree := agrees_on_exp_of_symm_unit F)
 
+/-- T5 (cost uniqueness on ℝ_{>0}): if `F` satisfies the JensenSketch obligations,
+    then `F` agrees with `Jcost` on positive reals. -/
+theorem T5_cost_uniqueness_on_pos {F : ℝ → ℝ} [JensenSketch F] :
+  ∀ {x : ℝ}, 0 < x → F x = Jcost x :=
+  F_eq_J_on_pos_of_derivation F
+
 @[simp] theorem Jcost_agrees_on_exp : AgreesOnExp Jcost := by
   intro t; rfl
 
