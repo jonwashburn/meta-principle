@@ -25,3 +25,10 @@ instance : LogModel G where
 ```
 
 This yields T5 on ℝ>0 for `F := G ∘ log`.
+
+## Included T5 demos
+- `CostDemo.Gcosh` (exact cosh benchmark) implements `LogModel` trivially and demonstrates T5.
+- `CostDemo2.GcoshScaled` provides a second minimal variant wired through the same interface.
+
+## CI
+A minimal workflow under `.github/workflows/ci.yml` runs `lake update` and `lake build` here on every push.
