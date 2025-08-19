@@ -752,6 +752,24 @@ end ClassicalBridge
 
 namespace ClassicalBridge
 
+open Measure Theory
+
+variable {M : RecognitionStructure}
+
+/-- Coarse-graining skeleton: a formal placeholder indicating a Riemann-sum style limit
+    from tick-indexed sums to an integral in a continuum presentation. This is stated as
+    a proposition to be instantiated when a concrete measure/embedding is provided. -/
+structure CoarseGrain (α : Type) where
+  -- discrete index and embedding into a measurable timeline
+  embed : Nat → α
+  toReal : α → ℝ
+  -- Riemann-sum convergence schema (placeholder; to be instantiated per model)
+  sums_to_integral : Prop
+
+end ClassicalBridge
+
+namespace ClassicalBridge
+
 open Potential Causality
 
 variable {M : RecognitionStructure}
@@ -1483,6 +1501,39 @@ structure GlobalOnly where
 /-- Effective acceleration (or weight multiplier) induced by the ILG kernel under a global-only config. -/
 def effectiveWeight (K : ILGKernel) (G : GlobalOnly) (t ζ : ℝ) : ℝ :=
   G.lambda * G.xi * K.w t (G.zeta ζ)
+
+/-- Optional kernel properties (placeholders for analysis): monotonicity in time and morphology. -/
+structure ILGKernelProps (K : ILGKernel) : Prop where
+  mono_t : ∀ ζ, Monotone (fun t => K.w t ζ)
+  mono_zeta : ∀ t, Monotone (fun ζ => K.w t ζ)
+
+/-- Optional global-only properties (e.g., nonnegativity of multipliers). -/
+structure GlobalOnlyProps (G : GlobalOnly) : Prop where
+  lambda_xi_nonneg : 0 ≤ G.lambda * G.xi
+
+/-- Effective source predicate: nonnegativity of the induced weight for all arguments. -/
+def EffectiveSource (K : ILGKernel) (G : GlobalOnly) : Prop := ∀ t ζ, 0 ≤ effectiveWeight K G t ζ
+
+/-- From kernel nonnegativity and nonnegative global multipliers, conclude an effective source. -/
+theorem effectiveSource_of_nonneg (K : ILGKernel) (G : GlobalOnly)
+  (hλξ : 0 ≤ G.lambda * G.xi) : EffectiveSource K G := by
+  intro t ζ
+  have hw : 0 ≤ K.w t (G.zeta ζ) := K.nonneg t (G.zeta ζ)
+  -- (λ·ξ) ≥ 0 and w ≥ 0 ⇒ (λ·ξ) * w ≥ 0
+  have : 0 ≤ (G.lambda * G.xi) * K.w t (G.zeta ζ) := mul_nonneg hλξ hw
+  simpa [effectiveWeight, mul_comm, mul_left_comm, mul_assoc] using this
+
+section
+variable {M : RecognitionStructure}
+
+/-- Lightweight continuity→effective-source bridge: conservation plus nonnegative kernel factors
+    yield a nonnegative effective source. This captures the sign structure; dynamics are left abstract. -/
+theorem continuity_to_effective_source
+  (K : ILGKernel) (G : GlobalOnly) (L : Ledger M)
+  [Conserves L] (hλξ : 0 ≤ G.lambda * G.xi) : EffectiveSource K G :=
+  effectiveSource_of_nonneg K G hλξ
+
+end
 
 end Gravity
 
