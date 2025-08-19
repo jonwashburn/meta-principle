@@ -1542,6 +1542,36 @@ lemma mass_rshift (U : Constants.RSUnits) (k : Nat) (r : ℤ) (f : ℝ) :
   dsimp [mass]
   simp [Int.cast_add, hdist, Real.exp_add, hexp_log, mul_comm, mul_left_comm, mul_assoc]
 
+private lemma exp_nat_mul (L : ℝ) : ∀ n : Nat, Real.exp ((n : ℝ) * L) = (Real.exp L) ^ n
+| 0 => by simp
+| Nat.succ n => by
+    have hdist : ((Nat.succ n : ℝ) * L) = (n : ℝ) * L + L := by
+      ring
+    simp [hdist, exp_nat_mul n, Real.exp_add, pow_succ, mul_comm, mul_left_comm, mul_assoc]
+
+@[simp] lemma B_of_zero : B_of 0 = 1 := by simp [B_of]
+
+@[simp] lemma B_of_succ (k : Nat) : B_of (k+1) = 2 * B_of k := by
+  simp [B_of, pow_succ, mul_comm]
+
+lemma mass_kshift (U : Constants.RSUnits) (k : Nat) (r : ℤ) (f : ℝ) :
+  mass U (k+1) r f = 2 * mass U k r f := by
+  dsimp [mass]
+  simp [B_of_succ, mul_comm, mul_left_comm, mul_assoc]
+
+lemma mass_strict_mono_k (U : Constants.RSUnits) (k : Nat) (r : ℤ) (f : ℝ) :
+  mass U (k+1) r f > mass U k r f := by
+  have hpos : 0 < mass U k r f := mass_pos U k r f
+  have htwo : (2 : ℝ) > 1 := by norm_num
+  simpa [mass_kshift U k r f, two_mul] using (mul_lt_mul_of_pos_right htwo hpos)
+
+lemma mass_strict_mono_r (U : Constants.RSUnits) (k : Nat) (r : ℤ) (f : ℝ) :
+  mass U k (r+1) f > mass U k r f := by
+  have hpos : 0 < mass U k r f := mass_pos U k r f
+  have hφ : (Constants.phi : ℝ) > 1 := by
+    have := Constants.one_lt_phi; simpa using this
+  simpa [mass_rshift U k r f] using (mul_lt_mul_of_pos_right hφ hpos)
+
 lemma B_of_pos (k : Nat) : 0 < B_of k := by
   have : 0 < (2:ℝ) := by norm_num
   simpa [B_of] using pow_pos this k
@@ -1592,6 +1622,49 @@ lemma mass_ratio_full (U : Constants.RSUnits)
     _ = (B_of k2 / B_of k1) *
           Real.exp ((((r2 - r1 : ℤ) : ℝ)) * Real.log Constants.phi) := by
             simpa [hE, Real.exp_sub, hsub, mul_comm, mul_left_comm, mul_assoc]
+
+lemma mass_ratio_power_ge (U : Constants.RSUnits)
+  (k2 k1 : Nat) (r2 r1 : ℤ) (f : ℝ) (h : r1 ≤ r2) :
+  mass U k2 r2 f / mass U k1 r1 f
+    = (B_of k2 / B_of k1) * (Constants.phi) ^ (Int.toNat (r2 - r1)) := by
+  classical
+  have hn : 0 ≤ r2 - r1 := by exact sub_nonneg.mpr h
+  have hcast : ((r2 - r1 : ℤ) : ℝ) = (Int.toNat (r2 - r1) : ℝ) := by
+    have := Int.ofNat_toNat_of_nonneg hn
+    -- cast both sides to ℝ
+    simpa using congrArg (fun z : ℤ => (z : ℝ)) this.symm
+  have := mass_ratio_full U k2 k1 r2 r1 f
+  -- rewrite exponential as φ^n
+  have :
+    Real.exp ((((r2 - r1 : ℤ) : ℝ)) * Real.log Constants.phi)
+      = (Constants.phi) ^ (Int.toNat (r2 - r1)) := by
+    simp [hcast, exp_nat_mul (Real.log Constants.phi), Constants.exp_log_phi]
+  simpa [this]
+    using this.trans (rfl)
+
+lemma mass_ratio_power_le (U : Constants.RSUnits)
+  (k2 k1 : Nat) (r2 r1 : ℤ) (f : ℝ) (h : r2 < r1) :
+  mass U k2 r2 f / mass U k1 r1 f
+    = (B_of k2 / B_of k1) * (1 / (Constants.phi) ^ (Int.toNat (r1 - r2))) := by
+  classical
+  -- Use full ratio and rewrite with a negative multiple on the exponent
+  have : mass U k2 r2 f / mass U k1 r1 f
+      = (B_of k2 / B_of k1) *
+        Real.exp ((((r2 - r1 : ℤ) : ℝ)) * Real.log Constants.phi) :=
+    mass_ratio_full U k2 k1 r2 r1 f
+  have hn : 0 < r1 - r2 := sub_pos.mpr h
+  have hcast : ((r2 - r1 : ℤ) : ℝ) = - (Int.toNat (r1 - r2) : ℝ) := by
+    have hnn : 0 ≤ r1 - r2 := le_of_lt hn
+    have hrepr : (r1 - r2 : ℤ) = Int.ofNat (Int.toNat (r1 - r2)) :=
+      (Int.ofNat_toNat_of_nonneg hnn)
+    have : ((r2 - r1 : ℤ) : ℝ) = - ((r1 - r2 : ℤ) : ℝ) := by
+      have : (r2 - r1 : ℤ) = - (r1 - r2) := by ring
+      simpa [this]
+    simpa [hrepr] using this
+  have : Real.exp ((((r2 - r1 : ℤ) : ℝ)) * Real.log Constants.phi)
+            = 1 / (Constants.phi) ^ (Int.toNat (r1 - r2)) := by
+    simp [hcast, Real.exp_neg, exp_nat_mul (Real.log Constants.phi), Constants.exp_log_phi, one_div, mul_comm, mul_left_comm, mul_assoc]
+  simpa [this] using this
 
 lemma mass_kshift' (U : Constants.RSUnits) (k1 k2 : Nat) (r : ℤ) (f : ℝ) :
   mass U k2 r f = (B_of k2 / B_of k1) * mass U k1 r f := by
