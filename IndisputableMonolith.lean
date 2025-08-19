@@ -1023,6 +1023,30 @@ instance : JensenSketch Jcost :=
   , axis_upper := by intro t; exact le_of_eq rfl
   , axis_lower := by intro t; exact le_of_eq rfl }
 
+/-! ### Local EL bridge: stationarity of `t ↦ Jcost (exp t)` at 0
+
+noncomputable def Jlog (t : ℝ) : ℝ := Jcost (Real.exp t)
+
+@[simp] lemma Jlog_as_cosh (t : ℝ) : Jlog t = Real.cosh t - 1 := by
+  -- Jcost (exp t) = ((exp t + exp (-t))/2 - 1) and cosh t = (exp t + exp (-t))/2
+  dsimp [Jlog]
+  simpa [Real.cosh, sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using (Jcost_exp t)
+
+lemma hasDerivAt_Jlog (t : ℝ) : HasDerivAt Jlog (Real.sinh t) t := by
+  -- derivative of cosh is sinh; subtracting a constant keeps derivative
+  have h := Real.hasDerivAt_cosh t
+  have h' : HasDerivAt (fun t => Real.cosh t - 1) (Real.sinh t) t := by
+    simpa [sub_eq_add_neg] using h.sub_const 1
+  -- rewrite via `Jlog_as_cosh`
+  simpa [Jlog_as_cosh] using h'
+
+@[simp] lemma hasDerivAt_Jlog_zero : HasDerivAt Jlog 0 0 := by
+  simpa using (hasDerivAt_Jlog 0)
+
+@[simp] lemma deriv_Jlog_zero : deriv Jlog 0 = 0 := by
+  classical
+  simpa using (hasDerivAt_Jlog_zero).deriv
+
 end Cost
 
 /-! ## T5 demo: a concrete `G` witnessing the log-model obligations. -/
