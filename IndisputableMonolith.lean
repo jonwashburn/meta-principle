@@ -574,7 +574,7 @@ lemma increment_on_ReachN {δ : ℤ} {p : Pot M}
   ∀ {n x y}, Causality.ReachN (Kin M) n x y → p y - p x = (n : ℤ) * δ := by
   intro n x y h
   induction h with
-  | zero => 
+  | zero =>
       simp
   | @succ n x y z hxy hyz ih =>
       -- p z - p x = (p z - p y) + (p y - p x) = δ + n·δ = (n+1)·δ
@@ -1415,4 +1415,38 @@ lemma lambda_rec_sq (U : RSUnits) (C : ClassicalParams) :
 end RSUnits
 
 end Constants
+end IndisputableMonolith
+
+namespace IndisputableMonolith
+
+/-! ## Spectra: structural mass law and rung-shift lemma -/
+
+namespace Spectra
+
+open Constants
+
+/-- Binary scale factor `B = 2^k` as a real. -/
+def B_of (k : Nat) : ℝ := (2 : ℝ) ^ k
+
+/-- Structural mass law: `m = B · E_coh · φ^(r+f)` encoded via `exp ((r+f) log φ)` to ease algebra. -/
+noncomputable def mass (U : Constants.RSUnits) (k : Nat) (r : ℤ) (f : ℝ) : ℝ :=
+  B_of k * U.Ecoh * Real.exp (((r : ℝ) + f) * Real.log Constants.phi)
+
+/-- Rung shift: increasing `r` by 1 multiplies the mass by `φ`. -/
+lemma mass_rshift (U : Constants.RSUnits) (k : Nat) (r : ℤ) (f : ℝ) :
+  mass U k (r + 1) f = Constants.phi * mass U k r f := by
+  classical
+  have hφpos : 0 < Constants.phi := Constants.phi_pos
+  have hexp_log : Real.exp (Real.log Constants.phi) = Constants.phi := by
+    simpa using Real.exp_log hφpos
+  -- abbreviations
+  set L : ℝ := Real.log Constants.phi
+  have hdist : (((r : ℝ) + 1 + f) * L) = (((r : ℝ) + f) * L + L) := by
+    ring
+  -- unfold and rewrite
+  dsimp [mass]
+  simp [Int.cast_add, hdist, Real.exp_add, hexp_log, mul_comm, mul_left_comm, mul_assoc]
+
+end Spectra
+
 end IndisputableMonolith
