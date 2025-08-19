@@ -568,6 +568,31 @@ theorem T4_unique_up_to_const_on_component {δ : ℤ} {p q : Pot M}
   simpa [add_comm, add_left_comm, add_assoc, sub_eq_add_neg] using
     (eq_add_of_sub_eq hdiff)
 
+/-- T8 quantization lemma: along any n-step reach, `p` changes by exactly `n·δ`. -/
+lemma increment_on_ReachN {δ : ℤ} {p : Pot M}
+  (hp : DE (M:=M) δ p) :
+  ∀ {n x y}, Causality.ReachN (Kin M) n x y → p y - p x = (n : ℤ) * δ := by
+  intro n x y h
+  induction h with
+  | zero => 
+      simp
+  | @succ n x y z hxy hyz ih =>
+      -- p z - p x = (p z - p y) + (p y - p x) = δ + n·δ = (n+1)·δ
+      have hz : p z - p y = δ := hp hyz
+      calc
+        p z - p x = (p z - p y) + (p y - p x) := by ring
+        _ = δ + (n : ℤ) * δ := by simpa [hz, ih]
+        _ = ((n : ℤ) + 1) * δ := by ring
+        _ = ((Nat.succ n : Nat) : ℤ) * δ := by
+              simp [Nat.cast_add, Nat.cast_ofNat]
+
+/-- Corollary: the set of potential differences along reaches is the δ-generated subgroup. -/
+lemma diff_in_deltaSub {δ : ℤ} {p : Pot M}
+  (hp : DE (M:=M) δ p) {n x y}
+  (h : Causality.ReachN (Kin M) n x y) : ∃ k : ℤ, p y - p x = k * δ := by
+  refine ⟨(n : ℤ), ?_⟩
+  simpa using increment_on_ReachN (M:=M) (δ:=δ) (p:=p) hp (n:=n) (x:=x) (y:=y) h
+
 end Potential
 
 /-! ## Ledger uniqueness via affine edge increments
@@ -1272,6 +1297,13 @@ noncomputable section
 
 /-- Golden ratio φ. -/
 def phi : ℝ := (1 + Real.sqrt 5) / 2
+
+lemma phi_pos : 0 < phi := by
+  have hrt : 0 < Real.sqrt 5 := Real.sqrt_pos.mpr (by norm_num : (0 : ℝ) < 5)
+  have : 0 < (1 + Real.sqrt 5) / (2:ℝ) := by
+    have : 0 < 1 + Real.sqrt 5 := by linarith
+    exact div_pos this (by norm_num)
+  simpa [phi] using this
 
 /-- RS unit system: fundamental tick τ0, voxel length ℓ0, and coherence energy E_coh. -/
 structure RSUnits where
