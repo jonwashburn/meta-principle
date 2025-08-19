@@ -1447,6 +1447,43 @@ lemma mass_rshift (U : Constants.RSUnits) (k : Nat) (r : ℤ) (f : ℝ) :
   dsimp [mass]
   simp [Int.cast_add, hdist, Real.exp_add, hexp_log, mul_comm, mul_left_comm, mul_assoc]
 
+/-- Minimal particle data group (PDG) mapping hook: label and structural rung parameters only. -/
+structure PDGMap where
+  label : String
+  r : ℤ
+  f : ℝ
+  k : Nat
+
+/-- Map a PDG structural entry to a mass prediction given RS units (no numerics inside Lean). -/
+noncomputable def massOf (U : Constants.RSUnits) (p : PDGMap) : ℝ :=
+  mass U p.k p.r p.f
+
 end Spectra
+
+end IndisputableMonolith
+
+namespace IndisputableMonolith
+
+/-! ## Gravity: ILG interface stubs (phenomenology-aligned, no numerics) -/
+
+namespace Gravity
+
+/-- Dimensionless ILG kernel: takes scaled dynamical time `t := T_dyn/τ0` and a morphology factor `ζ`.
+    The kernel is assumed nonnegative. Further properties (e.g., monotonicity) can be added as needed. -/
+structure ILGKernel where
+  w : ℝ → ℝ → ℝ
+  nonneg : ∀ t ζ, 0 ≤ w t ζ
+
+/-- Global-only configuration placeholders (normalizations and morphology mapping). -/
+structure GlobalOnly where
+  xi : ℝ
+  lambda : ℝ
+  zeta : ℝ → ℝ
+
+/-- Effective acceleration (or weight multiplier) induced by the ILG kernel under a global-only config. -/
+def effectiveWeight (K : ILGKernel) (G : GlobalOnly) (t ζ : ℝ) : ℝ :=
+  G.lambda * G.xi * K.w t (G.zeta ζ)
+
+end Gravity
 
 end IndisputableMonolith
