@@ -156,6 +156,16 @@ theorem T7_nyquist_obstruction {T D : Nat}
   (hT : T < 2 ^ D) : ¬ ∃ f : Fin T → Pattern D, Surjective f :=
   no_surj_small T D hT
 
+/-- ## T7 (threshold no-aliasing): at T = 2^D there exists a bijection (no aliasing at threshold). -/
+theorem T7_threshold_bijection (D : Nat) : ∃ f : Fin (2 ^ D) → Pattern D, Bijective f := by
+  classical
+  -- canonical equivalence `Pattern D ≃ Fin (2^D)`
+  let e := (Fintype.equivFin (Pattern D))
+  -- invert to get `Fin (2^D) ≃ Pattern D`
+  let einv := e.symm
+  refine ⟨fun i => einv i, ?_⟩
+  exact einv.bijective
+
 /-! ## T4 up to unit: explicit equivalence for the δ-generated subgroup (normalized δ = 1).
     Mapping n•δ ↦ n, specialized here to δ = 1 for clarity. -/
 namespace LedgerUnits
@@ -1369,6 +1379,21 @@ lemma phi_pos : 0 < phi := by
     exact div_pos this (by norm_num)
   simpa [phi] using this
 
+@[simp] lemma log_phi_pos : 0 < Real.log phi := by
+  have hφ : 1 < phi := by
+    -- 1 < (1 + sqrt 5)/2 is obvious since sqrt 5 > 1
+    have : (1 : ℝ) < Real.sqrt 5 := by
+      have : (1 : ℝ)^2 < (Real.sqrt 5)^2 := by simpa using sq_lt_sq.mpr (by linarith : (1:ℝ) < Real.sqrt 5)
+      simpa using this
+    have : 2 < 1 + Real.sqrt 5 := by linarith
+    have : 1 < (1 + Real.sqrt 5) / 2 := by exact (one_lt_div_iff.mpr (by norm_num : (0:ℝ) < 2)).2 this
+    simpa [phi] using this
+  simpa using Real.log_pos_iff.mpr hφ
+
+@[simp] lemma exp_log_phi : Real.exp (Real.log phi) = phi := by
+  have hφpos := phi_pos
+  simpa using Real.exp_log hφpos
+
 /-- RS unit system: fundamental tick τ0, voxel length ℓ0, and coherence energy E_coh. -/
 structure RSUnits where
   tau0 : ℝ
@@ -1511,6 +1536,57 @@ lemma mass_rshift (U : Constants.RSUnits) (k : Nat) (r : ℤ) (f : ℝ) :
   dsimp [mass]
   simp [Int.cast_add, hdist, Real.exp_add, hexp_log, mul_comm, mul_left_comm, mul_assoc]
 
+lemma B_of_pos (k : Nat) : 0 < B_of k := by
+  have : 0 < (2:ℝ) := by norm_num
+  simpa [B_of] using pow_pos this k
+
+lemma mass_pos (U : Constants.RSUnits) (k : Nat) (r : ℤ) (f : ℝ) : 0 < mass U k r f := by
+  classical
+  dsimp [mass]
+  have h1 : 0 < B_of k := B_of_pos k
+  have h2 : 0 < U.Ecoh := U.pos_Ecoh
+  have h3 : 0 < Real.exp (((r : ℝ) + f) * Real.log Constants.phi) := Real.exp_pos _
+  exact mul_pos (mul_pos h1 h2) h3
+
+lemma mass_ratio_full (U : Constants.RSUnits)
+  (k2 k1 : Nat) (r2 r1 : ℤ) (f : ℝ) :
+  mass U k2 r2 f / mass U k1 r1 f
+    = (B_of k2 / B_of k1) *
+      Real.exp ((((r2 - r1 : ℤ) : ℝ)) * Real.log Constants.phi) := by
+  classical
+  dsimp [mass]
+  -- rearrange products into a clean ratio
+  have hpos1 : (B_of k1) ≠ 0 := ne_of_gt (B_of_pos k1)
+  have hpos2 : U.Ecoh ≠ 0 := ne_of_gt U.pos_Ecoh
+  have hpos3 : Real.exp (((r1 : ℝ) + f) * Real.log Constants.phi) ≠ 0 := by
+    exact (ne_of_gt (Real.exp_pos _))
+  have :
+    (B_of k2 * U.Ecoh * Real.exp (((r2 : ℝ) + f) * Real.log Constants.phi)) /
+    (B_of k1 * U.Ecoh * Real.exp (((r1 : ℝ) + f) * Real.log Constants.phi))
+    = (B_of k2 / B_of k1) *
+      (U.Ecoh / U.Ecoh) *
+      (Real.exp (((r2 : ℝ) + f) * Real.log Constants.phi)
+        / Real.exp (((r1 : ℝ) + f) * Real.log Constants.phi)) := by
+    field_simp [hpos1, hpos2, hpos3, mul_comm, mul_left_comm, mul_assoc]
+  -- simplify Ecoh/Ecoh and the exp ratio
+  have hE : (U.Ecoh / U.Ecoh) = 1 := by
+    field_simp [hpos2]
+  -- exponent difference
+  have hsub :
+    (((r2 : ℝ) + f) * Real.log Constants.phi) - (((r1 : ℝ) + f) * Real.log Constants.phi)
+      = (((r2 - r1 : ℤ) : ℝ)) * Real.log Constants.phi := by
+    ring
+  calc
+    mass U k2 r2 f / mass U k1 r1 f
+        = (B_of k2 * U.Ecoh * Real.exp (((r2 : ℝ) + f) * Real.log Constants.phi)) /
+          (B_of k1 * U.Ecoh * Real.exp (((r1 : ℝ) + f) * Real.log Constants.phi)) := rfl
+    _ = (B_of k2 / B_of k1) * (U.Ecoh / U.Ecoh) *
+          (Real.exp (((r2 : ℝ) + f) * Real.log Constants.phi)
+            / Real.exp (((r1 : ℝ) + f) * Real.log Constants.phi)) := by simpa [this]
+    _ = (B_of k2 / B_of k1) *
+          Real.exp ((((r2 - r1 : ℤ) : ℝ)) * Real.log Constants.phi) := by
+            simpa [hE, Real.exp_sub, hsub, mul_comm, mul_left_comm, mul_assoc]
+
 /-- Minimal particle data group (PDG) mapping hook: label and structural rung parameters only. -/
 structure PDGMap where
   label : String
@@ -1568,6 +1644,30 @@ theorem effectiveSource_of_nonneg (K : ILGKernel) (G : GlobalOnly)
   -- (λ·ξ) ≥ 0 and w ≥ 0 ⇒ (λ·ξ) * w ≥ 0
   have : 0 ≤ (G.lambda * G.xi) * K.w t (G.zeta ζ) := mul_nonneg hλξ hw
   simpa [effectiveWeight, mul_comm, mul_left_comm, mul_assoc] using this
+
+/-- If `K` is monotone in its arguments and the global-only multipliers are nonnegative,
+    then the effective weight is monotone in each argument. -/
+lemma effectiveWeight_monotone
+  (K : ILGKernel) (G : GlobalOnly)
+  (hK : ILGKernelProps K) (hG : GlobalOnlyProps G) :
+  (∀ ζ, Monotone (fun t => effectiveWeight K G t ζ)) ∧
+  (∀ t, Monotone (fun ζ => effectiveWeight K G t ζ)) := by
+  -- Multiplying a monotone nonnegative function by a nonnegative constant preserves monotonicity.
+  -- We assume λ·ξ ≥ 0 via `hG`. The zeta mapping is arbitrary; monotonicity in ζ flows through K.
+  refine ⟨?mono_t, ?mono_zeta⟩
+  · intro ζ a b hab
+    have : K.w a (G.zeta ζ) ≤ K.w b (G.zeta ζ) := (hK.mono_t (G.zeta ζ)) hab
+    have hconst : 0 ≤ G.lambda * G.xi := hG.lambda_xi_nonneg
+    -- multiply both sides by nonnegative constant
+    have := mul_le_mul_of_nonneg_left this hconst
+    simpa [effectiveWeight, mul_comm, mul_left_comm, mul_assoc]
+      using this
+  · intro t ζ1 ζ2 hζ
+    have : K.w t (G.zeta ζ1) ≤ K.w t (G.zeta ζ2) := (hK.mono_zeta t) (by exact hζ)
+    have hconst : 0 ≤ G.lambda * G.xi := hG.lambda_xi_nonneg
+    have := mul_le_mul_of_nonneg_left this hconst
+    simpa [effectiveWeight, mul_comm, mul_left_comm, mul_assoc]
+      using this
 
 section
 variable {M : RecognitionStructure}
