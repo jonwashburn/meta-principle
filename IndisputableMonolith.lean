@@ -1275,3 +1275,56 @@ end RSUnits
 end Constants
 
 end IndisputableMonolith
+
+namespace IndisputableMonolith
+namespace Constants
+
+/-! ### Small conveniences and rewrite lemmas for constants -/
+
+@[simp] lemma c_def (U : RSUnits) : RSUnits.c U = U.ell0 / U.tau0 := rfl
+@[simp] lemma hbar_def (U : RSUnits) : RSUnits.hbar U = U.Ecoh * U.tau0 / (2 * Real.pi) := rfl
+@[simp] lemma lambda_rec_def (U : RSUnits) (C : ClassicalParams) :
+  RSUnits.lambda_rec U C = Real.sqrt (RSUnits.hbar U * C.G / (RSUnits.c U) ^ 3) := rfl
+
+lemma two_pi_pos : 0 < (2 : ℝ) * Real.pi := by
+  have : 0 < Real.pi := Real.pi_pos
+  simpa [two_mul] using (mul_pos (by norm_num) this)
+
+lemma two_pi_ne_zero : (2 : ℝ) * Real.pi ≠ 0 := ne_of_gt two_pi_pos
+
+namespace RSUnits
+
+lemma c_ne_zero (U : RSUnits) : U.c ≠ 0 := ne_of_gt (c_pos U)
+lemma hbar_ne_zero (U : RSUnits) : U.hbar ≠ 0 := ne_of_gt (hbar_pos U)
+lemma lambda_rec_ne_zero (U : RSUnits) (C : ClassicalParams) : lambda_rec U C ≠ 0 :=
+  ne_of_gt (lambda_rec_pos U C)
+
+lemma c_mul_tau0_eq_ell0 (U : RSUnits) : U.c * U.tau0 = U.ell0 := by
+  have ht : U.tau0 ≠ 0 := ne_of_gt U.pos_tau0
+  -- Use field_simp to clear denominators
+  field_simp [RSUnits.c, ht]
+
+lemma Ecoh_eq_two_pi_hbar_div_tau0 (U : RSUnits) :
+  U.Ecoh = (2 * Real.pi) * U.hbar / U.tau0 := by
+  have ht : U.tau0 ≠ 0 := ne_of_gt U.pos_tau0
+  have hπ : (2 : ℝ) * Real.pi ≠ 0 := Constants.two_pi_ne_zero
+  -- Start from definition of hbar and rearrange
+  -- hbar = Ecoh * tau0 / (2π)  ⇒  Ecoh = (2π) * hbar / tau0
+  field_simp [RSUnits.hbar, ht, hπ]
+
+lemma lambda_rec_sq (U : RSUnits) (C : ClassicalParams) :
+  (lambda_rec U C) ^ 2 = hbar U * C.G / (c U) ^ 3 := by
+  have hc : 0 < c U := c_pos U
+  have hpow : 0 < (c U) ^ 3 := by simpa using pow_pos hc 3
+  have hnum : 0 < hbar U * C.G := mul_pos (hbar_pos U) C.pos_G
+  have hfrac : 0 < hbar U * C.G / (c U) ^ 3 := div_pos hnum hpow
+  have hnn : 0 ≤ hbar U * C.G / (c U) ^ 3 := le_of_lt hfrac
+  -- (sqrt x)^2 = x for x ≥ 0
+  simpa [pow_two, lambda_rec] using (by
+    have := Real.mul_self_sqrt hnn
+    simpa using this)
+
+end RSUnits
+
+end Constants
+end IndisputableMonolith
