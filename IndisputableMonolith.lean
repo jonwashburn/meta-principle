@@ -1394,6 +1394,12 @@ lemma phi_pos : 0 < phi := by
   have hφpos := phi_pos
   simpa using Real.exp_log hφpos
 
+lemma one_lt_phi : 1 < phi := by
+  have hrt : 0 < Real.sqrt 5 := Real.sqrt_pos.mpr (by norm_num : (0 : ℝ) < 5)
+  have h2lt : (2 : ℝ) < 1 + Real.sqrt 5 := by linarith
+  have hdiv : 1 < (1 + Real.sqrt 5) / 2 := (one_lt_div_iff.mpr (by norm_num : (0:ℝ) < 2)).2 h2lt
+  simpa [phi] using hdiv
+
 /-- RS unit system: fundamental tick τ0, voxel length ℓ0, and coherence energy E_coh. -/
 structure RSUnits where
   tau0 : ℝ
@@ -1586,6 +1592,21 @@ lemma mass_ratio_full (U : Constants.RSUnits)
     _ = (B_of k2 / B_of k1) *
           Real.exp ((((r2 - r1 : ℤ) : ℝ)) * Real.log Constants.phi) := by
             simpa [hE, Real.exp_sub, hsub, mul_comm, mul_left_comm, mul_assoc]
+
+lemma mass_kshift' (U : Constants.RSUnits) (k1 k2 : Nat) (r : ℤ) (f : ℝ) :
+  mass U k2 r f = (B_of k2 / B_of k1) * mass U k1 r f := by
+  classical
+  dsimp [mass]
+  have :
+    B_of k2 * U.Ecoh * Real.exp (((r : ℝ) + f) * Real.log Constants.phi)
+      = (B_of k2 / B_of k1) * (B_of k1 * U.Ecoh * Real.exp (((r : ℝ) + f) * Real.log Constants.phi)) := by
+    have hpos1 : (B_of k1) ≠ 0 := ne_of_gt (B_of_pos k1)
+    field_simp [hpos1, mul_comm, mul_left_comm, mul_assoc]
+  simpa [mass, mul_comm, mul_left_comm, mul_assoc] using this
+
+lemma mass_rshift_int (U : Constants.RSUnits) (k : Nat) (r1 r2 : ℤ) (f : ℝ)
+  (h : r2 = r1 + 1) : mass U k r2 f = Constants.phi * mass U k r1 f := by
+  simpa [h] using mass_rshift U k r1 f
 
 /-- Minimal particle data group (PDG) mapping hook: label and structural rung parameters only. -/
 structure PDGMap where
