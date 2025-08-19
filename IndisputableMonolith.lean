@@ -385,6 +385,100 @@ theorem mem_ballFS_iff_ballP (x y : α) : ∀ n, y ∈ ballFS (α:=α) x n ↔ b
     -- use the characterization of membership in union and bind
     simp [ballFS, ballP, ih, BoundedStep.step_iff_mem]  -- step ↔ mem neighbors
 
+@[simp] lemma card_singleton {x : α} : ({x} : Finset α).card = 1 := by
+  classical
+  simp
+
+/-- Cardinality inequality for unions: `|s ∪ t| ≤ |s| + |t|`. -/
+lemma card_union_le (s t : Finset α) : (s ∪ t).card ≤ s.card + t.card := by
+  classical
+  have : (s ∪ t).card ≤ (s ∪ t).card + (s ∩ t).card := Nat.le_add_right _ _
+  simpa [Finset.card_union_add_card_inter] using this
+
+/-- Generic upper bound: the size of `s.bind f` is at most the sum of the sizes. -/
+lemma card_bind_le_sum (s : Finset α) (f : α → Finset α) :
+  (s.bind f).card ≤ ∑ z in s, (f z).card := by
+  classical
+  refine Finset.induction_on s ?base ?step
+  · simp
+  · intro a s ha ih
+    have hbind : (insert a s).bind f = f a ∪ s.bind f := by
+      simp [Finset.bind, ha]
+    have hle : ((insert a s).bind f).card ≤ (f a).card + (s.bind f).card := by
+      simpa [hbind] using card_union_le (f a) (s.bind f)
+    have hsum : (f a).card + (s.bind f).card ≤ ∑ z in insert a s, (f z).card := by
+      simpa [Finset.sum_insert, ha] using Nat.add_le_add_left ih _
+    exact le_trans hle hsum
+
+/-- Sum of neighbor set sizes is bounded by degree times the number of sources. -/
+lemma sum_card_neighbors_le (s : Finset α) :
+  ∑ z in s, (BoundedStep.neighbors z).card ≤ d * s.card := by
+  classical
+  refine Finset.induction_on s ?base ?step
+  · simp
+  · intro a s ha ih
+    have hdeg : (BoundedStep.neighbors a).card ≤ d := BoundedStep.degree_bound_holds a
+    have : ∑ z in insert a s, (BoundedStep.neighbors z).card
+          = (BoundedStep.neighbors a).card + ∑ z in s, (BoundedStep.neighbors z).card := by
+      simp [Finset.sum_insert, ha]
+    have hle : (BoundedStep.neighbors a).card + ∑ z in s, (BoundedStep.neighbors z).card
+               ≤ d + ∑ z in s, (BoundedStep.neighbors z).card := Nat.add_le_add_right hdeg _
+    have hmul : d + ∑ z in s, (BoundedStep.neighbors z).card ≤ d * (s.card + 1) := by
+      -- use IH: sum ≤ d * s.card
+      have := ih
+      -- `Nat` arithmetic: d + (d * s.card) ≤ d * (s.card + 1)
+      -- since d + d * s.card = d * (s.card + 1)
+      simpa [Nat.mul_add, Nat.add_comm, Nat.add_left_comm, Nat.add_assoc, Nat.mul_one] using
+        (Nat.add_le_add_left this d)
+    have : ∑ z in insert a s, (BoundedStep.neighbors z).card ≤ d * (insert a s).card := by
+      simpa [this, Finset.card_insert_of_not_mem ha, Nat.add_comm, Nat.add_left_comm, Nat.add_assoc] using
+        (le_trans hle hmul)
+    exact this
+
+/-- Bound the expansion layer size: `|s.bind neighbors| ≤ d * |s|`. -/
+lemma card_bind_neighbors_le (s : Finset α) :
+  (s.bind (fun z => BoundedStep.neighbors z)).card ≤ d * s.card := by
+  classical
+  exact le_trans (card_bind_le_sum (s := s) (f := fun z => BoundedStep.neighbors z)) (sum_card_neighbors_le (s := s))
+
+/-- Recurrence: `|ballFS x (n+1)| ≤ (1 + d) * |ballFS x n|`. -/
+lemma card_ballFS_succ_le (x : α) (n : Nat) :
+  (ballFS (α:=α) x (n+1)).card ≤ (1 + d) * (ballFS (α:=α) x n).card := by
+  classical
+  -- unfold succ layer
+  have : ballFS (α:=α) x (Nat.succ n) =
+    let prev := ballFS (α:=α) x n
+    prev ∪ prev.bind (fun z => BoundedStep.neighbors z) := by rfl
+  dsimp [ballFS] at this
+  -- cardinal bound via union and bind bounds
+  have h_union_le : (let prev := ballFS (α:=α) x n;
+                     (prev ∪ prev.bind (fun z => BoundedStep.neighbors z)).card)
+                    ≤ (ballFS (α:=α) x n).card + (ballFS (α:=α) x n).bind (fun z => BoundedStep.neighbors z) |>.card := by
+    classical
+    simpa [ballFS] using card_union_le (ballFS (α:=α) x n) ((ballFS (α:=α) x n).bind (fun z => BoundedStep.neighbors z))
+  have h_bind_le : ((ballFS (α:=α) x n).bind (fun z => BoundedStep.neighbors z)).card
+                    ≤ d * (ballFS (α:=α) x n).card := card_bind_neighbors_le (s := ballFS (α:=α) x n)
+  have : (ballFS (α:=α) x (Nat.succ n)).card ≤ (ballFS (α:=α) x n).card + d * (ballFS (α:=α) x n).card := by
+    simpa [this] using Nat.le_trans h_union_le (Nat.add_le_add_left h_bind_le _)
+  -- rearrange RHS to (1 + d) * card
+  simpa [Nat.mul_comm, Nat.mul_left_comm, Nat.mul_add, Nat.add_comm, Nat.add_left_comm, Nat.add_assoc, Nat.one_mul]
+    using this
+
+/-- Geometric bound: `|ballFS x n| ≤ (1 + d)^n`. -/
+theorem ballFS_card_le_geom (x : α) : ∀ n : Nat, (ballFS (α:=α) x n).card ≤ (1 + d) ^ n := by
+  classical
+  intro n
+  induction' n with n ih
+  · -- base n = 0
+    simpa [ballFS, card_singleton] using (Nat.le_of_eq (by simp : (1 + d) ^ 0 = 1))
+  · -- step
+    have hrec := card_ballFS_succ_le (α:=α) (d:=d) (x := x) (n := n)
+    -- (1 + d) is monotone multiplier on Nat
+    have hmul : (1 + d) * (ballFS (α:=α) x n).card ≤ (1 + d) * (1 + d) ^ n := by
+      exact Nat.mul_le_mul_left _ ih
+    -- combine
+    exact le_trans hrec hmul
+
 end ConeBound
 
 /-! ## T4 (potential uniqueness): edge-difference invariance, constancy of differences on reach sets,
@@ -1111,7 +1205,7 @@ instance : AtomicTick M :=
 end Cycle3
 
 end IndisputableMonolith
- 
+
 namespace IndisputableMonolith
 
 /-! ## Constants: RS symbolic units and classical mapping hooks (no numerics) -/
