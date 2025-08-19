@@ -1111,3 +1111,73 @@ instance : AtomicTick M :=
 end Cycle3
 
 end IndisputableMonolith
+ 
+namespace IndisputableMonolith
+
+/-! ## Constants: RS symbolic units and classical mapping hooks (no numerics) -/
+
+namespace Constants
+
+noncomputable section
+
+/-- Golden ratio φ. -/
+def phi : ℝ := (1 + Real.sqrt 5) / 2
+
+/-- RS unit system: fundamental tick τ0, voxel length ℓ0, and coherence energy E_coh. -/
+structure RSUnits where
+  tau0 : ℝ
+  ell0 : ℝ
+  Ecoh : ℝ
+  pos_tau0 : 0 < tau0
+  pos_ell0 : 0 < ell0
+  pos_Ecoh : 0 < Ecoh
+
+namespace RSUnits
+
+/-- Speed bound c from voxel length and fundamental tick. -/
+def c (U : RSUnits) : ℝ := U.ell0 / U.tau0
+
+/-- Reduced Planck constant from E_coh and τ0. -/
+def hbar (U : RSUnits) : ℝ := U.Ecoh * U.tau0 / (2 * Real.pi)
+
+lemma c_pos (U : RSUnits) : 0 < U.c := by
+  have : 0 < U.ell0 / U.tau0 := div_pos U.pos_ell0 U.pos_tau0
+  simpa [c] using this
+
+lemma hbar_pos (U : RSUnits) : 0 < U.hbar := by
+  have hπ : 0 < (2 * Real.pi) := by
+    have : 0 < Real.pi := Real.pi_pos
+    have : 0 < (2:ℝ) * Real.pi := mul_pos (by norm_num) this
+    simpa [two_mul] using this
+  have : 0 < U.Ecoh * U.tau0 := mul_pos U.pos_Ecoh U.pos_tau0
+  have : 0 < U.Ecoh * U.tau0 / (2 * Real.pi) := div_pos this hπ
+  simpa [hbar] using this
+
+end RSUnits
+
+/-- Classical parameters used only for presentation-time mappings. -/
+structure ClassicalParams where
+  G : ℝ
+  alpha : ℝ
+  pos_G : 0 < G
+
+namespace RSUnits
+
+/-- Recognition length λ_rec from ħ, G, c. -/
+def lambda_rec (U : RSUnits) (C : ClassicalParams) : ℝ :=
+  Real.sqrt (hbar U * C.G / (c U) ^ 3)
+
+lemma lambda_rec_pos (U : RSUnits) (C : ClassicalParams) : 0 < lambda_rec U C := by
+  have hc : 0 < c U := c_pos U
+  have hpow : 0 < (c U) ^ 3 := by
+    have := pow_pos hc 3
+    simpa using this
+  have hnum : 0 < hbar U * C.G := mul_pos (hbar_pos U) C.pos_G
+  have hfrac : 0 < hbar U * C.G / (c U) ^ 3 := div_pos hnum hpow
+  simpa [lambda_rec] using Real.sqrt_pos.mpr hfrac
+
+end RSUnits
+
+end Constants
+
+end IndisputableMonolith
