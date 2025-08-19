@@ -244,6 +244,47 @@ noncomputable def equiv_delta (δ : ℤ) (hδ : δ ≠ 0) : DeltaSub δ ≃ ℤ 
 
 end LedgerUnits
 
+/-! ## UnitMapping: affine mappings from δ-ledger units to context scales (no numerics) -/
+namespace UnitMapping
+
+open LedgerUnits
+
+/-- Affine map from ℤ to ℝ: n ↦ slope·n + offset. -/
+structure AffineMapZ where
+  slope : ℝ
+  offset : ℝ
+
+@[simp] def apply (f : AffineMapZ) (n : ℤ) : ℝ := f.slope * (n : ℝ) + f.offset
+
+/-- Map δ-subgroup to ℝ by composing the non-canonical equivalence `toZ` with an affine map. -/
+noncomputable def mapDelta (δ : ℤ) (hδ : δ ≠ 0) (f : AffineMapZ) : DeltaSub δ → ℝ :=
+  fun p => f.slope * ((toZ δ p) : ℝ) + f.offset
+
+lemma mapDelta_diff (δ : ℤ) (hδ : δ ≠ 0) (f : AffineMapZ)
+  (p q : DeltaSub δ) :
+  mapDelta δ hδ f p - mapDelta δ hδ f q = f.slope * (((toZ δ p) : ℤ) - (toZ δ q)) := by
+  classical
+  simp [mapDelta, sub_eq_add_neg, add_comm, add_left_comm, add_assoc, mul_comm, mul_left_comm, mul_assoc, sub_eq_add_neg]
+
+/-- Context constructors: charge (quantum `qe`), time (τ0), and action (ħ). -/
+def chargeMap (qe : ℝ) : AffineMapZ := { slope := qe, offset := 0 }
+def timeMap (U : IndisputableMonolith.Constants.RSUnits) : AffineMapZ := { slope := U.tau0, offset := 0 }
+def actionMap (U : IndisputableMonolith.Constants.RSUnits) : AffineMapZ := { slope := IndisputableMonolith.Constants.RSUnits.hbar U, offset := 0 }
+
+/-- Existence of affine δ→charge mapping (no numerics). -/
+noncomputable def mapDeltaCharge (δ : ℤ) (hδ : δ ≠ 0) (qe : ℝ) : DeltaSub δ → ℝ :=
+  mapDelta δ hδ (chargeMap qe)
+
+/-- Existence of affine δ→time mapping via τ0. -/
+noncomputable def mapDeltaTime (δ : ℤ) (hδ : δ ≠ 0) (U : IndisputableMonolith.Constants.RSUnits) : DeltaSub δ → ℝ :=
+  mapDelta δ hδ (timeMap U)
+
+/-- Existence of affine δ→action mapping via ħ. -/
+noncomputable def mapDeltaAction (δ : ℤ) (hδ : δ ≠ 0) (U : IndisputableMonolith.Constants.RSUnits) : DeltaSub δ → ℝ :=
+  mapDelta δ hδ (actionMap U)
+
+end UnitMapping
+
 /-! ## Causality: n-step reachability and an n-ball light-cone bound (definition-level). -/
 namespace Causality
 
@@ -775,6 +816,17 @@ structure CoarseGrain (α : Type) where
   toReal : α → ℝ
   -- Riemann-sum convergence schema (placeholder; to be instantiated per model)
   sums_to_integral : Prop
+
+/-- Discrete→continuum continuity statement stub: conservation on closed chains and a valid coarse-grain
+    imply an integral continuity equation in the limit (placeholder proposition). -/
+structure ContinuityEquation (α : Type) where
+  holds : Prop
+
+theorem discrete_to_continuum_continuity {α : Type}
+  (CG : CoarseGrain α) (L : Ledger M) [Conserves L] :
+  ContinuityEquation α := by
+  -- Placeholder: conclude the proposition; concrete instantiation supplies the integral form
+  exact { holds := True }
 
 end ClassicalBridge
 
@@ -1647,24 +1699,23 @@ lemma mass_ratio_power_le (U : Constants.RSUnits)
   mass U k2 r2 f / mass U k1 r1 f
     = (B_of k2 / B_of k1) * (1 / (Constants.phi) ^ (Int.toNat (r1 - r2))) := by
   classical
-  -- Use full ratio and rewrite with a negative multiple on the exponent
-  have : mass U k2 r2 f / mass U k1 r1 f
-      = (B_of k2 / B_of k1) *
-        Real.exp ((((r2 - r1 : ℤ) : ℝ)) * Real.log Constants.phi) :=
-    mass_ratio_full U k2 k1 r2 r1 f
-  have hn : 0 < r1 - r2 := sub_pos.mpr h
-  have hcast : ((r2 - r1 : ℤ) : ℝ) = - (Int.toNat (r1 - r2) : ℝ) := by
-    have hnn : 0 ≤ r1 - r2 := le_of_lt hn
-    have hrepr : (r1 - r2 : ℤ) = Int.ofNat (Int.toNat (r1 - r2)) :=
-      (Int.ofNat_toNat_of_nonneg hnn)
-    have : ((r2 - r1 : ℤ) : ℝ) = - ((r1 - r2 : ℤ) : ℝ) := by
-      have : (r2 - r1 : ℤ) = - (r1 - r2) := by ring
-      simpa [this]
-    simpa [hrepr] using this
+  have hr : 0 ≤ r1 - r2 := le_of_lt h
+  have ndef : (r1 - r2 : ℤ) = Int.ofNat (Int.toNat (r1 - r2)) := Int.ofNat_toNat_of_nonneg hr
+  have hfull := mass_ratio_full U k2 k1 r2 r1 f
+  -- rewrite exp with negative exponent and use reciprocal power
   have : Real.exp ((((r2 - r1 : ℤ) : ℝ)) * Real.log Constants.phi)
-            = 1 / (Constants.phi) ^ (Int.toNat (r1 - r2)) := by
-    simp [hcast, Real.exp_neg, exp_nat_mul (Real.log Constants.phi), Constants.exp_log_phi, one_div, mul_comm, mul_left_comm, mul_assoc]
-  simpa [this] using this
+          = 1 / (Real.exp (Real.log Constants.phi)) ^ (Int.toNat (r1 - r2)) := by
+    have hneg : ((r2 - r1 : ℤ) : ℝ) = - ((r1 - r2 : ℤ) : ℝ) := by ring
+    simp [hneg, ndef, Real.exp_neg, exp_nat_mul (Real.log Constants.phi), one_div]
+  simpa [this, Constants.exp_log_phi] using hfull
+
+lemma mass_ratio_power (U : Constants.RSUnits)
+  (k2 k1 : Nat) (r2 r1 : ℤ) (f : ℝ) :
+  (r1 ≤ r2 → mass U k2 r2 f / mass U k1 r1 f = (B_of k2 / B_of k1) * (Constants.phi) ^ (Int.toNat (r2 - r1))) ∧
+  (r2 < r1 → mass U k2 r2 f / mass U k1 r1 f = (B_of k2 / B_of k1) * (1 / (Constants.phi) ^ (Int.toNat (r1 - r2)))) := by
+  constructor
+  · intro h; exact mass_ratio_power_ge U k2 k1 r2 r1 f h
+  · intro h; exact mass_ratio_power_le U k2 k1 r2 r1 f h
 
 lemma mass_kshift' (U : Constants.RSUnits) (k1 k2 : Nat) (r : ℤ) (f : ℝ) :
   mass U k2 r f = (B_of k2 / B_of k1) * mass U k1 r f := by
@@ -1776,5 +1827,37 @@ theorem continuity_to_effective_source
 end
 
 end Gravity
+
+end IndisputableMonolith
+
+namespace IndisputableMonolith
+
+/-! ## Quantum interface stubs: path weights and interface-level propositions -/
+
+namespace Quantum
+
+/-- Path weight class: assigns a cost `C` and defines probability `prob := exp(−C)`. -/
+structure PathWeight (γ : Type) where
+  C : γ → ℝ
+  prob : γ → ℝ := fun g => Real.exp (-(C g))
+
+/-- Interface-level Born rule statement (placeholder): there exists a wave-like representation whose
+    squared magnitude matches normalized `prob`. -/
+structure BornRuleIface (γ : Type) (PW : PathWeight γ) : Prop :=
+  (normalized : Prop)
+  (exists_wave_repr : Prop)
+
+/-- Interface-level Bose/Fermi statement (placeholder): permutation invariance yields symmetrization. -/
+structure BoseFermiIface (γ : Type) (PW : PathWeight γ) : Prop :=
+  (perm_invariant : Prop)
+  (symmetrization : Prop)
+
+/-- Existence lemma sketch: the RS path-weight (with additive cost) satisfies the interface. -/
+theorem rs_pathweight_iface (γ : Type) (PW : PathWeight γ) :
+  BornRuleIface γ PW ∧ BoseFermiIface γ PW := by
+  -- Placeholder existence; concrete instances supplied in applications
+  exact ⟨{ normalized := True, exists_wave_repr := True }, { perm_invariant := True, symmetrization := True }⟩
+
+end Quantum
 
 end IndisputableMonolith
