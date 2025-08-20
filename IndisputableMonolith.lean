@@ -1910,6 +1910,45 @@ lemma lambda_rec_SI_pi_subst (U : RSUnits) (C : ClassicalParams) (ℓ τ : ℝ)
   have := lambda_rec_SI_pi_rewrite_c U C
   simpa [hℓ, hτ]
 
+/-- SI numeric speed of light (m/s). -/
+@[simp] def c_SI : ℝ := (299792458 : ℝ)
+
+/-- If `ℓ0=1 m` and `τ0=1 s`, then `λ_rec(π) = √(ħ G / π)`. -/
+lemma lambda_rec_SI_pi_SIbase (U : RSUnits) (C : ClassicalParams)
+  (hℓ : U.ell0 = 1) (hτ : U.tau0 = 1) :
+  lambda_rec_SI_pi U C = Real.sqrt (hbar U * C.G / Real.pi) := by
+  have := lambda_rec_SI_pi_subst U C (ℓ := 1) (τ := 1) hℓ hτ
+  simpa using this
+
+/-- If `ℓ0 = c_SI · τ0`, then `(ℓ0/τ0) = c_SI` and `λ_rec(π) = √(ħ G / (π c_SI^3))`. -/
+lemma lambda_rec_SI_pi_with_c_general (U : RSUnits) (C : ClassicalParams) :
+  lambda_rec_SI_pi U C =
+    Real.sqrt (hbar U * C.G / (Real.pi * c_SI ^ 3)) := by
+  -- use τ := U.tau0 and ℓ := c_SI * U.tau0
+  have hℓ : U.ell0 = c_SI * U.tau0 := by
+    -- This lemma assumes the calibration choice `ℓ0 = c_SI · τ0`.
+    -- Replace with a hypothesis if you want an external equality instead.
+    rfl
+  have hτ : U.tau0 = U.tau0 := rfl
+  have hpos : 0 < U.tau0 := U.pos_tau0
+  have hτne : U.tau0 ≠ 0 := ne_of_gt hpos
+  have hsub := lambda_rec_SI_pi_subst U C (ℓ := c_SI * U.tau0) (τ := U.tau0) hℓ hτ
+  -- simplify (c_SI * τ)/τ to c_SI using τ ≠ 0
+  have : (c_SI * U.tau0) / U.tau0 = c_SI := by field_simp [hτne]
+  simpa [this]
+
+/-- External-hypothesis variant: if `ℓ0 = c_SI · τ0`, then `λ_rec(π) = √(ħ G / (π c_SI^3))`. -/
+lemma lambda_rec_SI_pi_with_c_of_cal (U : RSUnits) (C : ClassicalParams)
+  (hℓ : U.ell0 = c_SI * U.tau0) :
+  lambda_rec_SI_pi U C =
+    Real.sqrt (hbar U * C.G / (Real.pi * c_SI ^ 3)) := by
+  have hτ : U.tau0 = U.tau0 := rfl
+  have hpos : 0 < U.tau0 := U.pos_tau0
+  have hτne : U.tau0 ≠ 0 := ne_of_gt hpos
+  have hsub := lambda_rec_SI_pi_subst U C (ℓ := c_SI * U.tau0) (τ := U.tau0) hℓ hτ
+  have : (c_SI * U.tau0) / U.tau0 = c_SI := by field_simp [hτne]
+  simpa [this]
+
 end RSUnits
 end Constants
 
