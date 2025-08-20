@@ -320,6 +320,44 @@ noncomputable def mapDeltaTime (δ : ℤ) (hδ : δ ≠ 0) (U : IndisputableMono
 noncomputable def mapDeltaAction (δ : ℤ) (hδ : δ ≠ 0) (U : IndisputableMonolith.Constants.RSUnits) : DeltaSub δ → ℝ :=
   mapDelta δ hδ (actionMap U)
 
+@[simp] lemma mapDelta_fromZ (δ : ℤ) (hδ : δ ≠ 0) (f : AffineMapZ) (n : ℤ) :
+  mapDelta δ hδ f (fromZ δ n) = f.slope * (n : ℝ) + f.offset := by
+  classical
+  simp [mapDelta, toZ_fromZ δ hδ]
+
+lemma mapDelta_step (δ : ℤ) (hδ : δ ≠ 0) (f : AffineMapZ) (n : ℤ) :
+  mapDelta δ hδ f (fromZ δ (n+1)) - mapDelta δ hδ f (fromZ δ n) = f.slope := by
+  classical
+  simp [mapDelta_fromZ (δ:=δ) (hδ:=hδ) (f:=f), add_comm, add_left_comm, add_assoc, sub_eq_add_neg, mul_add, add_comm]
+
+@[simp] lemma mapDeltaTime_fromZ (δ : ℤ) (hδ : δ ≠ 0)
+  (U : IndisputableMonolith.Constants.RSUnits) (n : ℤ) :
+  mapDeltaTime δ hδ U (fromZ δ n) = U.tau0 * (n : ℝ) := by
+  simp [mapDeltaTime, timeMap]
+
+lemma mapDeltaTime_step (δ : ℤ) (hδ : δ ≠ 0)
+  (U : IndisputableMonolith.Constants.RSUnits) (n : ℤ) :
+  mapDeltaTime δ hδ U (fromZ δ (n+1)) - mapDeltaTime δ hδ U (fromZ δ n) = U.tau0 := by
+  simpa [mapDeltaTime, timeMap]
+
+@[simp] lemma mapDeltaAction_fromZ (δ : ℤ) (hδ : δ ≠ 0)
+  (U : IndisputableMonolith.Constants.RSUnits) (n : ℤ) :
+  mapDeltaAction δ hδ U (fromZ δ n) = (IndisputableMonolith.Constants.RSUnits.hbar U) * (n : ℝ) := by
+  simp [mapDeltaAction, actionMap]
+
+lemma mapDeltaAction_step (δ : ℤ) (hδ : δ ≠ 0)
+  (U : IndisputableMonolith.Constants.RSUnits) (n : ℤ) :
+  mapDeltaAction δ hδ U (fromZ δ (n+1)) - mapDeltaAction δ hδ U (fromZ δ n)
+    = IndisputableMonolith.Constants.RSUnits.hbar U := by
+  simpa [mapDeltaAction, actionMap]
+
+lemma mapDelta_diff_toZ (δ : ℤ) (hδ : δ ≠ 0) (f : AffineMapZ)
+  (p q : DeltaSub δ) :
+  mapDelta δ hδ f p - mapDelta δ hδ f q
+    = f.slope * ((toZ δ p - toZ δ q : ℤ) : ℝ) := by
+  classical
+  simpa using (mapDelta_diff (δ:=δ) (hδ:=hδ) (f:=f) (p:=p) (q:=q))
+
 end UnitMapping
 
 /-! ## Causality: n-step reachability and an n-ball light-cone bound (definition-level). -/
@@ -1329,6 +1367,17 @@ end CostDemo2
 
 -/
 
+/-! ### Optional: expose the φ fixed-point in the cost namespace for discoverability -/
+namespace Cost
+
+open Constants
+
+/-- From the constants layer: φ is the positive solution of x = 1 + 1/x. -/
+lemma phi_is_cost_fixed_point : phi = 1 + 1 / phi :=
+  Constants.phi_fixed_point
+
+end Cost
+
 /-! ## Tiny worked example + symbolic SI mapping (minimal) -/
 
 namespace Demo
@@ -1826,6 +1875,14 @@ lemma mass_using_EcohDerived (U : Constants.RSUnits) (k : Nat) (r : ℤ) (f : �
 /-- Unified zpow-style ratio using a piecewise φ^(r2−r1) with negative handled by reciprocal. -/
 noncomputable def phi_zpow (z : ℤ) : ℝ :=
   if 0 ≤ z then (Constants.phi : ℝ) ^ (Int.toNat z) else 1 / (Constants.phi : ℝ) ^ (Int.toNat (-z))
+
+@[simp] lemma phi_zpow_of_nonneg {z : ℤ} (hz : 0 ≤ z) :
+  phi_zpow z = (Constants.phi : ℝ) ^ (Int.toNat z) := by simp [phi_zpow, hz]
+
+@[simp] lemma phi_zpow_of_neg {z : ℤ} (hz : z < 0) :
+  phi_zpow z = 1 / (Constants.phi : ℝ) ^ (Int.toNat (-z)) := by
+  have : ¬ 0 ≤ z := not_le.mpr hz
+  simp [phi_zpow, this]
 
 lemma mass_ratio_zpow (U : Constants.RSUnits)
   (k2 k1 : Nat) (r2 r1 : ℤ) (f : ℝ) :
