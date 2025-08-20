@@ -1,0 +1,113 @@
+% !TEX program = pdflatex
+\documentclass[11pt]{article}
+
+% Encoding & fonts
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+
+% Layout & links
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{hyperref}
+
+% Math
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{enumitem}
+
+% Lean hook helpers (paper-side)
+\newcommand{\LeanHook}[1]{\texttt{#1}}
+\newcommand{\LeanRepoURL}{https://github.com/jonwashburn/lean-to-measurement}
+
+% Title & author
+\title{From Proof to Measurement: A Lean\,\mbox{-}\,Verified Reality Bridge for Physics}
+\author{Jonathan Washburn\\Independent Researcher\\\href{mailto:washburn@recognitionphysics.org}{washburn@recognitionphysics.org}}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We present a Lean-verified, parameter-free derivation layer for physics and a single, meter-native bridge that turns dimensionless theorems into SI equalities without introducing tunable parameters. Building on a sorry-free Lean development, we formalize (i) the unique symmetric cost functional and its Euler–Lagrange characterization on the log axis, (ii) the golden-ratio fixed point with uniqueness and positivity, and (iii) discrete results such as eight-tick minimality and the positive ledger gap $\delta_{\!\text{gap}}=\ln\varphi$. We then state and mechanize a \emph{Reality Bridge}: a structure-preserving evaluation that identifies cost with action ($J\mapsto S/\hbar$), one tick with $\tau_0$, and one hop with $\lambda_{\mathrm{rec}}$, with $c$ the maximal hop rate. Under the bridge, meter-native identities follow by construction, e.g. $\lambda_{\mathrm{rec}}=\sqrt{\hbar G/ c^{3}}$ (with an explicitly documented $\pi$-normalized variant), $\tau_{\mathrm{rec}}=2\pi/(8\ln\varphi)$, and a symbolic coherence-energy relation $E_{\mathrm{coh}}\propto\varphi^{-5}$. We further verify classical correspondences (discrete-to-continuum continuity, gauge potentials unique up to a constant, and EL/log-axis equivalence), and provide a structure-only spectra demonstrator with unified zpow ratios. The full artifact—including lemma anchors for all claims—is publicly available at \LeanRepoURL, enabling audit-level reproducibility and code review.
+\end{abstract}
+
+\section{Introduction}
+Modern physics achieves extraordinary empirical accuracy yet relies on externally supplied constants and flexible interfaces. This paper advances a different path: a mechanized, parameter-free derivation chain together with a \emph{single} bridge that renders results meter-native—without rescaling slack or per-domain knobs. It is a follow-on to our Meta-Principle note and precedes a comprehensive theory paper focusing on phenomenology.
+
+\paragraph{Contributions.} We:
+\begin{itemize}[leftmargin=1.25em]
+  \item develop a sorry-free Lean formalization of the core dimensionless results used here (unique symmetric cost; golden-ratio fixed point; ledger gap; eight-tick threshold);
+  \item formalize a Reality Bridge and prove non-circularity (dimensionless theorems upstream; unit choices affect labels only);
+  \item expose constants via Lean hooks: $\varphi$, $\delta_{\!\text{gap}}=\ln\varphi$, $\tau_{\mathrm{rec}}$, $\lambda_{\mathrm{rec}}$ (and $\pi$-normalized variant), and a symbolic $E_{\mathrm{coh}}$–$\varphi$ relation;
+  \item verify classical correspondences: continuity (discrete $\to$ continuum), T4 gauge uniqueness up to a constant, and EL/log-axis equivalence;
+  \item provide a structure-only spectra demonstrator with positivity/monotonicity and zpow-unified ratios; and
+  \item release a public artifact with lemma anchors for audit.\footnote{Repository: \LeanRepoURL}
+\end{itemize}
+
+\section{Background and Method}
+\paragraph{Lean/Mathlib footprint.} Our development is organized into namespaces (\texttt{Constants}, \texttt{ClassicalBridge}, \texttt{Cost}, \texttt{Spectra}, \texttt{Quantum}, \texttt{LambdaRec}) and relies on standard real analysis and algebra from Mathlib.
+
+\paragraph{Proof hygiene.} All results cited in this paper are sorry-free. We include positivity/non-zero support lemmas and small rewrite equalities to make downstream bridge statements local and composable.
+
+\paragraph{Bridge philosophy.} The Reality Bridge is semantic: it identifies cost with action and tick/hop with $(\tau_0,\lambda_{\mathrm{rec}})$ while preserving composition. Dimensionless theorems remain upstream; anchors (e.g., $\hbar, G, c$) affect only units.
+
+\section{Core Dimensionless Results in Lean}
+We summarize key results and cite their Lean anchors (inline names are illustrative; see Appendix~\ref{app:lemmas}).
+
+\paragraph{Unique symmetric cost and EL/log-axis.} Hooks: \LeanHook{Cost.Jlog}, \LeanHook{Cost.T5\_EL\_equiv\_general}, \LeanHook{Cost.hasDerivAt\_Jlog}.
+
+\paragraph{Golden-ratio fixed point and uniqueness.} Hooks: \LeanHook{Constants.phi\_fixed\_point}, \LeanHook{Constants.fixed\_point\_unique\_pos}, \LeanHook{Constants.phi\_sq\_eq\_phi\_add\_one}.
+
+\paragraph{Ledger gap and positivity.} Hooks: \LeanHook{Constants.delta\_gap}, \LeanHook{Constants.delta\_gap\_pos}.
+
+\paragraph{Eight-tick minimality (threshold).} Hooks: \LeanHook{T7\_nyquist\_obstruction}, \LeanHook{T7\_threshold\_bijection}.
+
+\section{The Reality Bridge (Meter-Native Semantics)}
+We state a single, structure-preserving evaluation that maps cost to action/\,$\hbar$ and basic units (tick, hop) to $(\tau_0,\lambda_{\mathrm{rec}})$ with maximal hop rate $c$. Non-circularity follows from factoring unit relabelings through a quotient that leaves dimensionless evaluations invariant.
+
+\paragraph{Meter-native identities and hooks.}
+\begin{itemize}[leftmargin=1.25em]
+  \item $c$ and $\tau_{\mathrm{rec}}$: \LeanHook{Constants.c\_def}, \LeanHook{Constants.c\_pos}, \LeanHook{Constants.tau\_rec}, \LeanHook{Constants.tau\_rec\_eq\_pi\_over\_4\_logphi}.
+  \item Planck-scale length: \LeanHook{Constants.RSUnits.lambda\_rec}, \LeanHook{Constants.lambda\_rec\_def}, \LeanHook{Constants.lambda\_rec\_sq}.
+  \item $\pi$-normalized variant and link: \LeanHook{Constants.RSUnits.lambda\_rec\_pi}, \LeanHook{Constants.lambda\_rec\_pi\_eq\_lambda\_rec\_div\_sqrt\_pi}.
+  \item SI calibration: \LeanHook{Constants.RSUnits.c\_SI}, \LeanHook{Constants.RSUnits.lambda\_rec\_SI\_pi\_def}, \LeanHook{Constants.RSUnits.lambda\_rec\_SI\_pi\_rewrite\_c}, \LeanHook{Constants.RSUnits.lambda\_rec\_SI\_pi\_SIbase}, \LeanHook{Constants.RSUnits.lambda\_rec\_SI\_pi\_with\_c\_of\_cal}.
+  \item Coherence-energy relation (symbolic): \LeanHook{Constants.Ecoh\_phi5}, \LeanHook{Constants.EcohDerived\_of\_Ecoh\_phi5}.
+\end{itemize}
+
+\section{Classical Correspondences}
+\paragraph{Continuity (discrete $\to$ continuum).} Hooks: \LeanHook{ClassicalBridge.discrete\_to\_continuum\_continuity}, with schema \LeanHook{ClassicalBridge.CoarseGrain}, \LeanHook{ClassicalBridge.RiemannSum}, \LeanHook{ClassicalBridge.ContinuityEquation}.
+
+\paragraph{Gauge uniqueness up to a constant (T4).} Hook: \LeanHook{ClassicalBridge.gaugeClass\_eq\_of\_same\_delta\_basepoint}.
+
+\paragraph{EL/log-axis equivalence and convex minimum (T5).} Hooks: \LeanHook{Cost.T5\_EL\_equiv\_general}, \LeanHook{Cost.deriv\_Jlog\_zero}, \LeanHook{Cost.Jlog\_zero}.
+
+\section{Constants and Hooks}
+We catalog the constants and their Lean representations (see Table~\ref{tab:constants} in the full draft).
+
+\section{Spectra Demonstrator (Structure Only)}
+We present the structure-only mass law and unified ratio calculus. Hooks: \LeanHook{Spectra.mass}, \LeanHook{Spectra.mass\_ratio\_zpow}, \LeanHook{Spectra.mass\_kshift}, \LeanHook{Spectra.mass\_rshift}; sector factors via \LeanHook{Constants.Sector}, \LeanHook{Constants.B\_of\_sector}.
+
+\section{Reproducibility and Artifact}
+The public artifact includes the stand-alone Lean file, outline, and an artifact guide. Reviewers can navigate to lemma anchors listed in Appendix~\ref{app:lemmas}. Repository: \href{\LeanRepoURL}{\LeanRepoURL}.
+
+\section{Limitations and Future Work}
+We defer extended phenomenology (e.g., gravity/ILG, cosmology pipelines, full spectra numerics) to the companion “full theory” paper; here we emphasize the derivation layer and the meter-native bridge.
+
+\section{Related Work}
+Brief context on mechanized mathematics for variational reasoning and physics-adjacent formalizations in proof assistants.
+
+\section{Conclusion}
+A Lean-verified, parameter-free derivation layer can be made meter-native by a single bridge with no slack. The resulting pipeline—proof $\to$ measurement—is reproducible and audit-ready.
+
+\appendix
+\section{Lemma/Definition Inventory}\label{app:lemmas}
+A flat list of Lean anchors cited in the paper, with one-line descriptions (to be expanded in the full draft).
+
+\section{Normalization Note (\texorpdfstring{$\lambda_{\mathrm{rec}}$}{lambda} vs. $\lambda_{\mathrm{rec}}(\pi)$)}\label{app:norm}
+We document the $\pi$-normalized variant and the linking lemma for readers comparing conventions.
+
+\section{Artifact Guide (condensed)}\label{app:artifact}
+Build instructions, versioning, and review checklist; cross-reference to the repository ARTIFACT.md.
+
+\end{document}
