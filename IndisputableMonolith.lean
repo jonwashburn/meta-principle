@@ -1735,6 +1735,30 @@ lemma mass_ratio_power (U : Constants.RSUnits)
   · intro h; exact mass_ratio_power_ge U k2 k1 r2 r1 f h
   · intro h; exact mass_ratio_power_le U k2 k1 r2 r1 f h
 
+/-- Corollary (fixed k): ratio depends only on φ (r-difference). -/
+lemma mass_ratio_fixed_k (U : Constants.RSUnits)
+  (k : Nat) (r2 r1 : ℤ) (f : ℝ) :
+  (r1 ≤ r2 → mass U k r2 f / mass U k r1 f = (Constants.phi) ^ (Int.toNat (r2 - r1))) ∧
+  (r2 < r1 → mass U k r2 f / mass U k r1 f = 1 / (Constants.phi) ^ (Int.toNat (r1 - r2))) := by
+  constructor
+  · intro h
+    have := mass_ratio_power_ge U k k r2 r1 f h
+    simpa [div_mul_eq_mul_div, one_mul, mul_comm]
+      using this
+  · intro h
+    have := mass_ratio_power_le U k k r2 r1 f h
+    simpa [div_mul_eq_mul_div, one_mul, mul_comm]
+      using this
+
+/-- Corollary (fixed r): ratio depends only on B (k-difference). -/
+lemma mass_ratio_fixed_r (U : Constants.RSUnits)
+  (k2 k1 : Nat) (r : ℤ) (f : ℝ) :
+  mass U k2 r f / mass U k1 r f = (B_of k2 / B_of k1) := by
+  classical
+  have := mass_ratio_full U k2 k1 r r f
+  -- exponent vanishes when r2 = r1
+  simpa using this
+
 lemma mass_kshift' (U : Constants.RSUnits) (k1 k2 : Nat) (r : ℤ) (f : ℝ) :
   mass U k2 r f = (B_of k2 / B_of k1) * mass U k1 r f := by
   classical
