@@ -1894,6 +1894,22 @@ lemma lambda_rec_SI_pi_eq (U : RSUnits) (C : ClassicalParams) :
   lambda_rec_SI_pi U C = lambda_rec_SI U C / Real.sqrt Real.pi :=
   lambda_rec_pi_eq_lambda_rec_div_sqrt_pi (U:=U) (C:=C)
 
+/-- Unfolded form of the π-normalized hook. -/
+@[simp] lemma lambda_rec_SI_pi_def (U : RSUnits) (C : ClassicalParams) :
+  lambda_rec_SI_pi U C = Real.sqrt (hbar U * C.G / (Real.pi * (c U) ^ 3)) := rfl
+
+/-- Rewrite the π-normalized hook via `c = ell0 / tau0`. -/
+lemma lambda_rec_SI_pi_rewrite_c (U : RSUnits) (C : ClassicalParams) :
+  lambda_rec_SI_pi U C = Real.sqrt (hbar U * C.G / (Real.pi * (U.ell0 / U.tau0) ^ 3)) := by
+  simp [lambda_rec_SI_pi, lambda_rec_pi, c_def]
+
+/-- Substitute explicit `ℓ, τ` representatives for `ell0, tau0`. -/
+lemma lambda_rec_SI_pi_subst (U : RSUnits) (C : ClassicalParams) (ℓ τ : ℝ)
+  (hℓ : U.ell0 = ℓ) (hτ : U.tau0 = τ) :
+  lambda_rec_SI_pi U C = Real.sqrt (hbar U * C.G / (Real.pi * (ℓ / τ) ^ 3)) := by
+  have := lambda_rec_SI_pi_rewrite_c U C
+  simpa [hℓ, hτ]
+
 end RSUnits
 end Constants
 
