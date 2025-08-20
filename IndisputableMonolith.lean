@@ -1735,6 +1735,73 @@ lemma lambda_rec_pos (U : RSUnits) (C : ClassicalParams) : 0 < lambda_rec U C :=
 
 end RSUnits
 
+/-! ## Additional RS constants and hooks: δ_gap, τ_rec, ledger alphabet, sector factors, Ecoh (φ^-5) -/
+
+/-- Universal ledger gap δ_gap := ln φ. -/
+def delta_gap : ℝ := Real.log phi
+
+@[simp] lemma delta_gap_eq_log_phi : delta_gap = Real.log phi := rfl
+
+lemma delta_gap_pos : 0 < delta_gap := by
+  simpa [delta_gap] using log_phi_pos
+
+/-- Fundamental recognition tick (dimensionless symbolic): τ_rec := 2π / (8 ln φ). -/
+def tau_rec : ℝ := (2 * Real.pi) / (8 * Real.log phi)
+
+lemma tau_rec_eq_pi_over_4_logphi : tau_rec = Real.pi / (4 * Real.log phi) := by
+  -- divide numerator and denominator by 2
+  have hlogpos : 0 < Real.log phi := log_phi_pos
+  have hne : (8 * Real.log phi) ≠ 0 := by
+    have : Real.log phi ≠ 0 := ne_of_gt hlogpos
+    exact mul_ne_zero (by norm_num) this
+  have : (2 * Real.pi) / (8 * Real.log phi) = ((2 * Real.pi) / 2) / ((8 * Real.log phi) / 2) := by
+    field_simp [hne]
+  -- Simplify
+  have : (2 * Real.pi) / (8 * Real.log phi) = Real.pi / (4 * Real.log phi) := by
+    field_simp [tau_rec, mul_comm, mul_left_comm, mul_assoc] at *
+    -- For readability we finish by direct arithmetic
+    -- (2π)/(8 ln φ) = π/(4 ln φ)
+    have : (2:ℝ) / 8 = 1 / 4 := by norm_num
+    simpa [tau_rec, mul_comm, mul_left_comm, mul_assoc, this]
+  simpa [tau_rec] using this
+
+lemma tau_rec_pos : 0 < tau_rec := by
+  have hnum : 0 < 2 * Real.pi := by have : 0 < Real.pi := Real.pi_pos; simpa [two_mul] using mul_pos (by norm_num) this
+  have hden : 0 < 8 * Real.log phi := by simpa using mul_pos (by norm_num) log_phi_pos
+  have : 0 < (2 * Real.pi) / (8 * Real.log phi) := div_pos hnum hden
+  simpa [tau_rec] using this
+
+/-- Ledger alphabet `A_L = {−4, …, 4}` as a finite set. -/
+def ledgerAlphabet : Finset ℤ := Finset.Icc (-4 : ℤ) 4
+
+@[simp] lemma mem_ledgerAlphabet {z : ℤ} : z ∈ ledgerAlphabet ↔ (-4 : ℤ) ≤ z ∧ z ≤ 4 := by
+  simp [ledgerAlphabet]
+
+/-- Minimal sector enumeration for multiplicity factors. -/
+inductive Sector | e | q | W deriving DecidableEq
+
+/-- Channel multiplicities: leptons=1, quarks=3, gauge bosons=12. -/
+def B_of_sector : Sector → Nat
+| Sector.e => 1
+| Sector.q => 3
+| Sector.W => 12
+
+@[simp] lemma B_e : B_of_sector Sector.e = 1 := rfl
+@[simp] lemma B_q : B_of_sector Sector.q = 3 := rfl
+@[simp] lemma B_W : B_of_sector Sector.W = 12 := rfl
+
+/-- Symbolic Ecoh proportional to φ^(−5). `Ecoh0` is an abstract scale (e.g., 1 eV).
+    Use with `RSUnits.EcohDerived` to connect to `U.Ecoh`. -/
+def Ecoh_phi5 (Ecoh0 : ℝ) : ℝ := Ecoh0 / (phi ^ (5 : Nat))
+
+lemma EcohDerived_of_Ecoh_phi5 (U : RSUnits) (Ecoh0 : ℝ)
+  (h : U.Ecoh = Ecoh_phi5 Ecoh0) : RSUnits.EcohDerived U Ecoh0 := by
+  simpa [RSUnits.EcohDerived, Ecoh_phi5]
+
+/-! Paper aliases (one-liners) -/
+@[simp] def delta_gap_RS : ℝ := delta_gap
+@[simp] def tau_rec_RS : ℝ := tau_rec
+
 end Constants
 
 end IndisputableMonolith
