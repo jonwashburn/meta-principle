@@ -1452,6 +1452,11 @@ lemma one_lt_phi : 1 < phi := by
   have hdiv : 1 < (1 + Real.sqrt 5) / 2 := (one_lt_div_iff.mpr (by norm_num : (0:ℝ) < 2)).2 h2lt
   simpa [phi] using hdiv
 
+lemma pow_phi_pos (n : Nat) : 0 < (phi : ℝ) ^ n := by
+  have hφpos := phi_pos
+  have : 0 < (phi : ℝ) := hφpos
+  simpa using pow_pos this n
+
 /-- RS unit system: fundamental tick τ0, voxel length ℓ0, and coherence energy E_coh. -/
 structure RSUnits where
   tau0 : ℝ
@@ -1514,6 +1519,13 @@ end IndisputableMonolith
 namespace IndisputableMonolith
 namespace Constants
 
+/-!
+Public API (for papers)
+- RSUnits: provide `tau0`, `ell0`, `Ecoh` with positivity
+- Derived: `c U = ell0/tau0`, `hbar U = Ecoh*tau0/(2π)`, `lambda_rec U C = sqrt(hbar*G/c^3)`
+- Golden ratio: `phi`, with helpers `phi_pos`, `one_lt_phi`, `log_phi_pos`, `exp_log_phi`, `pow_phi_pos`
+Use SI/CODATA numerics in papers; keep Lean as relations/defs.
+-/
 /-! ### Small conveniences and rewrite lemmas for constants -/
 
 @[simp] lemma c_def (U : RSUnits) : RSUnits.c U = U.ell0 / U.tau0 := rfl
@@ -1594,6 +1606,9 @@ lemma mass_rshift (U : Constants.RSUnits) (k : Nat) (r : ℤ) (f : ℝ) :
   dsimp [mass]
   simp [Int.cast_add, hdist, Real.exp_add, hexp_log, mul_comm, mul_left_comm, mul_assoc]
 
+@[simp] lemma mass_rshift_simp (U : Constants.RSUnits) (k : Nat) (r : ℤ) (f : ℝ) :
+  mass U k (r + 1) f = Constants.phi * mass U k r f := mass_rshift U k r f
+
 private lemma exp_nat_mul (L : ℝ) : ∀ n : Nat, Real.exp ((n : ℝ) * L) = (Real.exp L) ^ n
 | 0 => by simp
 | Nat.succ n => by
@@ -1610,6 +1625,9 @@ lemma mass_kshift (U : Constants.RSUnits) (k : Nat) (r : ℤ) (f : ℝ) :
   mass U (k+1) r f = 2 * mass U k r f := by
   dsimp [mass]
   simp [B_of_succ, mul_comm, mul_left_comm, mul_assoc]
+
+@[simp] lemma mass_kshift_simp (U : Constants.RSUnits) (k : Nat) (r : ℤ) (f : ℝ) :
+  mass U (k.succ) r f = 2 * mass U k r f := mass_kshift U k r f
 
 lemma mass_strict_mono_k (U : Constants.RSUnits) (k : Nat) (r : ℤ) (f : ℝ) :
   mass U (k+1) r f > mass U k r f := by
@@ -1836,10 +1854,22 @@ namespace IndisputableMonolith
 
 namespace Quantum
 
-/-- Path weight class: assigns a cost `C` and defines probability `prob := exp(−C)`. -/
+/-- Path weight class: assigns a cost `C`, a composition on paths, and defines probability `prob := exp(−C)`.
+    Includes a normalization axiom over a designated finite set. -/
 structure PathWeight (γ : Type) where
   C : γ → ℝ
+  comp : γ → γ → γ
+  cost_additive : ∀ a b, C (comp a b) = C a + C b
   prob : γ → ℝ := fun g => Real.exp (-(C g))
+  normSet : Finset γ
+  sum_prob_eq_one : ∑ g in normSet, prob g = 1
+
+open scoped BigOperators
+
+lemma prob_comp {γ} (PW : PathWeight γ) (a b : γ) :
+  PW.prob (PW.comp a b) = PW.prob a * PW.prob b := by
+  dsimp [PathWeight.prob]
+  simp [PW.cost_additive, Real.exp_add, mul_comm, mul_left_comm, mul_assoc, sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
 
 /-- Interface-level Born rule statement (placeholder): there exists a wave-like representation whose
     squared magnitude matches normalized `prob`. -/
