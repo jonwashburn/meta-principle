@@ -1606,6 +1606,16 @@ lemma mass_rshift (U : Constants.RSUnits) (k : Nat) (r : ℤ) (f : ℝ) :
   dsimp [mass]
   simp [Int.cast_add, hdist, Real.exp_add, hexp_log, mul_comm, mul_left_comm, mul_assoc]
 
+/-- Multiple rung shifts: `n` steps multiply mass by `φ^n`. -/
+lemma mass_rshift_steps (U : Constants.RSUnits) (k : Nat) (r : ℤ) (n : Nat) (f : ℝ) :
+  mass U k (r + (n : ℤ)) f = (Constants.phi) ^ n * mass U k r f := by
+  classical
+  -- expand using the exponential form and collect terms
+  dsimp [mass]
+  have L : ℝ := Real.log Constants.phi
+  have hdist : (((r : ℝ) + (n : ℝ) + f) * L) = (((r : ℝ) + f) * L + (n : ℝ) * L) := by ring
+  simp [hdist, Real.exp_add, exp_nat_mul (Real.log Constants.phi), Constants.exp_log_phi, mul_comm, mul_left_comm, mul_assoc]
+
 @[simp] lemma mass_rshift_simp (U : Constants.RSUnits) (k : Nat) (r : ℤ) (f : ℝ) :
   mass U k (r + 1) f = Constants.phi * mass U k r f := mass_rshift U k r f
 
@@ -1918,6 +1928,17 @@ lemma prob_singleton_norm (γ : Type) (PW : PathWeight γ) {g : γ}
   classical
   have := congrArg (fun s : Finset γ => ∑ x in s, PW.prob x) h
   simpa using this.trans PW.sum_prob_eq_one
+
+/-- Minimal constructor: build a PathWeight on a finite set with given cost and discrete composition. -/
+def ofFinset {γ : Type} (S : Finset γ) (C : γ → ℝ) (comp : γ → γ → γ)
+  (cost_add : ∀ a b, C (comp a b) = C a + C b)
+  (norm_one : ∑ g in S, Real.exp (-(C g)) = 1) : PathWeight γ :=
+{ C := C
+, comp := comp
+, cost_additive := cost_add
+, prob := fun g => Real.exp (-(C g))
+, normSet := S
+, sum_prob_eq_one := by simpa using norm_one }
 
 end Quantum
 
