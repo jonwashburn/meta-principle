@@ -1740,6 +1740,70 @@ end Constants
 end IndisputableMonolith
 
 namespace IndisputableMonolith
+
+/-! ## LambdaRec: dimensionless extremum for the recognition length and SI mapping hooks -/
+
+namespace LambdaRec
+
+@[simp] def bitCost : ℝ := 1
+
+@[simp] def curvCost (λ : ℝ) : ℝ := 2 * λ ^ 2
+
+/-- Balance condition embodying the A8 extremisation (cost splitting). -/
+def Balance (λ : ℝ) : Prop := bitCost = curvCost λ
+
+lemma balance_iff_sq (λ : ℝ) : Balance λ ↔ λ ^ 2 = (1/2 : ℝ) := by
+  unfold Balance; simp [bitCost, curvCost, pow_two, mul_comm, mul_left_comm, mul_assoc, eq_comm]
+
+/-- The dimensionless optimum (positive solution). -/
+@[simp] def lambda0 : ℝ := Real.sqrt (1/2 : ℝ)
+
+lemma lambda0_pos : 0 < lambda0 := by
+  have : 0 < (1/2 : ℝ) := by norm_num
+  simpa [lambda0] using Real.sqrt_pos.mpr this
+
+lemma balance_lambda0 : Balance lambda0 := by
+  unfold Balance
+  simp [bitCost, curvCost, lambda0, pow_two]
+
+/-- Uniqueness of the positive balanced solution. -/
+theorem exists_unique_pos_balance : ∃! λ : ℝ, 0 < λ ∧ Balance λ := by
+  refine ⟨lambda0, ?_, ?_⟩
+  · exact ⟨lambda0_pos, balance_lambda0⟩
+  · intro x hx
+    rcases hx with ⟨hxpos, hbal⟩
+    have hsq : x ^ 2 = (1/2 : ℝ) := (balance_iff_sq x).1 hbal
+    have hx0 : 0 ≤ x := le_of_lt hxpos
+    have hx_eq : x = Real.sqrt (x ^ 2) := by
+      have habs : Real.sqrt (x ^ 2) = |x| := by simpa using Real.sqrt_sq_eq_abs x
+      simpa [habs, abs_of_nonneg hx0]
+    simpa [hsq, lambda0] using hx_eq
+
+end LambdaRec
+
+namespace Constants
+namespace RSUnits
+
+/-- SI mapping with a π-face averaging normalization: λ_rec(π) := √(ħ G / (π c^3)). -/
+def lambda_rec_pi (U : RSUnits) (C : ClassicalParams) : ℝ :=
+  Real.sqrt (hbar U * C.G / (Real.pi * (c U) ^ 3))
+
+lemma lambda_rec_pi_pos (U : RSUnits) (C : ClassicalParams) : 0 < lambda_rec_pi U C := by
+  have hc : 0 < c U := c_pos U
+  have hpow : 0 < (c U) ^ 3 := by simpa using pow_pos hc 3
+  have hnum : 0 < hbar U * C.G := mul_pos (hbar_pos U) C.pos_G
+  have hden : 0 < Real.pi * (c U) ^ 3 := by
+    have : 0 < Real.pi := Real.pi_pos
+    exact mul_pos this hpow
+  have hfrac : 0 < hbar U * C.G / (Real.pi * (c U) ^ 3) := div_pos hnum hden
+  simpa [lambda_rec_pi] using Real.sqrt_pos.mpr hfrac
+
+end RSUnits
+end Constants
+
+end IndisputableMonolith
+
+namespace IndisputableMonolith
 namespace Constants
 
 /-!
@@ -2319,10 +2383,10 @@ def ofDisjointUnion {γ₁ γ₂ : Type}
       | Sum.inl a => w1 * Real.exp (-(C₁ a))
       | Sum.inr b => w2 * Real.exp (-(C₂ b))) s
          = w1 * ∑ a in A, Real.exp (-(C₁ a)) + w2 * ∑ b in B, Real.exp (-(C₂ b)) := by
-      simpa [hsplit, hsumA, hsumB, Finset.sum_image] 
+      simpa [hsplit, hsumA, hsumB, Finset.sum_image]
     -- finish with given normalizations and w1+w2=1
     simpa [this, norm₁, norm₂, hsum, add_comm, add_left_comm, add_assoc]
-} 
+}
 
 /-- Independence product constructor: probabilities multiply over independent components. -/
 def product {γ₁ γ₂ : Type} (PW₁ : PathWeight γ₁) (PW₂ : PathWeight γ₂) : PathWeight (γ₁ × γ₂) :=
