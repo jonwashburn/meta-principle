@@ -277,9 +277,7 @@ lemma kOf_step_succ (δ : ℤ) (hδ : δ ≠ 0) (m : Nat) :
   simpa [fromNat]
     using congrArg Int.toNat (toZ_succ (δ:=δ) (hδ:=hδ) (n:=Int.ofNat m))
 
-@[simp] lemma B_of_kOf_fromNat (δ : ℤ) (hδ : δ ≠ 0) (m : Nat) :
-  IndisputableMonolith.Spectra.B_of (kOf δ (fromNat δ m)) = IndisputableMonolith.Spectra.B_of m := by
-  simp [kOf_fromNat (δ:=δ) (hδ:=hδ) (m:=m)]
+
 
 end LedgerUnits
 
@@ -1774,6 +1772,14 @@ lemma mass_rshift (U : Constants.RSUnits) (k : Nat) (r : ℤ) (f : ℝ) :
   dsimp [mass]
   simp [Int.cast_add, hdist, Real.exp_add, hexp_log, mul_comm, mul_left_comm, mul_assoc]
 
+/-- Auxiliary: exp of a natural multiple. -/-
+private lemma exp_nat_mul (L : ℝ) : ∀ n : Nat, Real.exp ((n : ℝ) * L) = (Real.exp L) ^ n
+| 0 => by simp
+| Nat.succ n => by
+    have hdist : ((Nat.succ n : ℝ) * L) = (n : ℝ) * L + L := by
+      ring
+    simp [hdist, exp_nat_mul n, Real.exp_add, pow_succ, mul_comm, mul_left_comm, mul_assoc]
+
 /-- Multiple rung shifts: `n` steps multiply mass by `φ^n`. -/
 lemma mass_rshift_steps (U : Constants.RSUnits) (k : Nat) (r : ℤ) (n : Nat) (f : ℝ) :
   mass U k (r + (n : ℤ)) f = (Constants.phi) ^ n * mass U k r f := by
@@ -1820,28 +1826,6 @@ lemma mass_using_EcohDerived (U : Constants.RSUnits) (k : Nat) (r : ℤ) (f : �
 /-- Unified zpow-style ratio using a piecewise φ^(r2−r1) with negative handled by reciprocal. -/
 noncomputable def phi_zpow (z : ℤ) : ℝ :=
   if 0 ≤ z then (Constants.phi : ℝ) ^ (Int.toNat z) else 1 / (Constants.phi : ℝ) ^ (Int.toNat (-z))
-
-lemma mass_ratio_zpow (U : Constants.RSUnits)
-  (k2 k1 : Nat) (r2 r1 : ℤ) (f : ℝ) :
-  mass U k2 r2 f / mass U k1 r1 f
-    = (B_of k2 / B_of k1) * phi_zpow (r2 - r1) := by
-  classical
-  by_cases h : r1 ≤ r2
-  · have := mass_ratio_power_ge U k2 k1 r2 r1 f h
-    simp [phi_zpow, h, this]
-  · have hlt : r2 < r1 := lt_of_le_of_ne (le_of_lt (lt_of_not_ge h)) (by decide)
-    have := mass_ratio_power_le U k2 k1 r2 r1 f hlt
-    have : mass U k2 r2 f / mass U k1 r1 f
-        = (B_of k2 / B_of k1) * (1 / (Constants.phi) ^ (Int.toNat (r1 - r2))) := this
-    have hneg : ¬ (0 ≤ r2 - r1) := by
-      have : r2 - r1 < 0 := sub_neg.mpr hlt
-      exact (not_le.mpr this)
-    have : phi_zpow (r2 - r1) = 1 / (Constants.phi) ^ (Int.toNat (r1 - r2)) := by
-      have hz : 0 ≤ r1 - r2 := le_of_lt hlt
-      have hrefl : (r1 - r2 : ℤ) = Int.ofNat (Int.toNat (r1 - r2)) := Int.ofNat_toNat_of_nonneg hz
-      -- by definition on negative branch
-      simp [phi_zpow, hneg, hrefl]
-    simp [this, mass_ratio_power_le U k2 k1 r2 r1 f hlt]
 
 @[simp] lemma mass_ratio_same_r_k_succ (U : Constants.RSUnits) (k : Nat) (r : ℤ) (f : ℝ) :
   mass U (k+1) r f / mass U k r f = 2 := by
