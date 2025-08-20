@@ -1744,6 +1744,16 @@ namespace IndisputableMonolith
 /-! ## LambdaRec: dimensionless extremum for the recognition length and SI mapping hooks -/
 
 namespace LambdaRec
+/-!
+A3/A7/A8 context:
+- A3 (positivity): costs are nonnegative, enabling convex extremisation.
+- A7 (eight‑beat curvature packet): enforces ±4 curvature distributed across eight faces, giving
+  the dimensionless curvature cost `curvCost λ = 2 λ^2` via area scaling.
+- A8 (self‑similar extremisation): minimize a symmetric cost by balancing its dual contributions,
+  here `bitCost = curvCost λ`.
+- This module encodes the dimensionless balance and shows the unique positive solution
+  λ₀ = √(1/2). SI units are restored via mapping lemmas in `Constants.RSUnits`.
+-/
 
 @[simp] def bitCost : ℝ := 1
 
@@ -1779,6 +1789,41 @@ theorem exists_unique_pos_balance : ∃! λ : ℝ, 0 < λ ∧ Balance λ := by
       simpa [habs, abs_of_nonneg hx0]
     simpa [hsq, lambda0] using hx_eq
 
+/-- Generalized normalization: balance with curvature prefactor `K > 0` has
+    the unique positive solution λ = √(bitCost / (2K)). -/
+def BalanceK (K : ℝ) (λ : ℝ) : Prop := bitCost = (2 * K) * λ ^ 2
+
+lemma balanceK_solution (K : ℝ) (hK : 0 < K) :
+  ∃! λ : ℝ, 0 < λ ∧ BalanceK K λ := by
+  -- Solve (2K) λ^2 = 1 ⇒ λ^2 = 1/(2K) ⇒ λ = √(1/(2K))
+  let λ⋆ : ℝ := Real.sqrt (1 / (2 * K))
+  have hden : 0 < 2 * K := by have : 0 < (2:ℝ) := by norm_num; exact mul_pos this hK
+  have hpos : 0 < λ⋆ := by simpa [λ⋆] using Real.sqrt_pos.mpr (by
+    have : 0 < 1 / (2 * K) := by exact one_div_pos.mpr hden
+    exact this)
+  have hbal : BalanceK K λ⋆ := by
+    unfold BalanceK
+    have : λ⋆ ^ 2 = 1 / (2 * K) := by
+      have := Real.sqrt_mul_self (le_of_lt (by
+        have : 0 < 1 / (2 * K) := one_div_pos.mpr hden
+        exact this))
+      simpa [λ⋆]
+    simp [bitCost, this, mul_comm, mul_left_comm, mul_assoc]
+  refine ⟨λ⋆, ⟨hpos, hbal⟩, ?_⟩
+  intro x hx
+  rcases hx with ⟨hxpos, hxb⟩
+  have hx0 : 0 ≤ x := le_of_lt hxpos
+  have : (2 * K) * x ^ 2 = 1 := by
+    simpa [BalanceK, bitCost, mul_comm, mul_left_comm, mul_assoc] using hxb.symm
+  have hsq : x ^ 2 = 1 / (2 * K) := by
+    have h2Kne : (2 * K) ≠ 0 := ne_of_gt hden
+    field_simp [h2Kne] at this
+    exact this
+  have hx_eq : x = Real.sqrt (x ^ 2) := by
+    have := Real.sqrt_mul_self hx0; simpa using this
+  have : x = Real.sqrt (1 / (2 * K)) := by simpa [hsq]
+  simpa [λ⋆] using this
+
 end LambdaRec
 
 namespace Constants
@@ -1797,6 +1842,35 @@ lemma lambda_rec_pi_pos (U : RSUnits) (C : ClassicalParams) : 0 < lambda_rec_pi 
     exact mul_pos this hpow
   have hfrac : 0 < hbar U * C.G / (Real.pi * (c U) ^ 3) := div_pos hnum hden
   simpa [lambda_rec_pi] using Real.sqrt_pos.mpr hfrac
+
+/-- Normalization relation: inserting a π in the denominator rescales λ by `1/√π`. -/
+lemma lambda_rec_pi_eq_lambda_rec_div_sqrt_pi (U : RSUnits) (C : ClassicalParams) :
+  lambda_rec_pi U C = lambda_rec U C / Real.sqrt Real.pi := by
+  have hc : 0 < c U := c_pos U
+  have hpow : 0 < (c U) ^ 3 := by simpa using pow_pos hc 3
+  have hnum : 0 < hbar U * C.G := mul_pos (hbar_pos U) C.pos_G
+  have hfrac : 0 < hbar U * C.G / (c U) ^ 3 := div_pos hnum hpow
+  have hfrac_nonneg : 0 ≤ hbar U * C.G / (c U) ^ 3 := le_of_lt hfrac
+  have hinvpi_nonneg : 0 ≤ 1 / Real.pi := by
+    have : 0 < Real.pi := Real.pi_pos
+    simpa [one_div] using inv_nonneg.mpr (le_of_lt this)
+  have hπne : (Real.pi) ≠ 0 := ne_of_gt Real.pi_pos
+  have hcz : (c U) ^ 3 ≠ 0 := by exact pow_ne_zero 3 (c_ne_zero U)
+  have hsplit : hbar U * C.G / (Real.pi * (c U) ^ 3)
+              = (hbar U * C.G / (c U) ^ 3) * (1 / Real.pi) := by
+    field_simp [hπne, hcz, one_div, mul_comm, mul_left_comm, mul_assoc]
+  calc
+    lambda_rec_pi U C
+        = Real.sqrt ((hbar U * C.G / (c U) ^ 3) * (1 / Real.pi)) := by
+              simpa [lambda_rec_pi, hsplit]
+    _ = Real.sqrt (hbar U * C.G / (c U) ^ 3) * Real.sqrt (1 / Real.pi) := by
+              simpa using Real.sqrt_mul hfrac_nonneg hinvpi_nonneg
+    _ = Real.sqrt (hbar U * C.G / (c U) ^ 3) * (1 / Real.sqrt Real.pi) := by
+              have : Real.sqrt (1 / Real.pi) = 1 / Real.sqrt Real.pi := by
+                simpa [one_div] using Real.sqrt_inv (le_of_lt Real.pi_pos)
+              simpa [this]
+    _ = lambda_rec U C / Real.sqrt Real.pi := by
+              simpa [lambda_rec, one_div, div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc]
 
 end RSUnits
 end Constants
