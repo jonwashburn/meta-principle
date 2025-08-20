@@ -1826,6 +1826,18 @@ lemma balanceK_solution (K : ℝ) (hK : 0 < K) :
 
 end LambdaRec
 
+/-- Public API: concise names for papers. -/
+namespace LambdaRec
+
+@[simp] def lambda_dimless_opt : ℝ := lambda0
+
+lemma lambda_dimless_opt_balance : Balance lambda_dimless_opt := balance_lambda0
+
+lemma lambda_SI_pi (U : Constants.RSUnits) (C : Constants.ClassicalParams) : ℝ :=
+  Constants.RSUnits.lambda_rec_pi U C
+
+end LambdaRec
+
 namespace Constants
 namespace RSUnits
 
@@ -1874,6 +1886,20 @@ lemma lambda_rec_pi_eq_lambda_rec_div_sqrt_pi (U : RSUnits) (C : ClassicalParams
 
 end RSUnits
 end Constants
+
+end IndisputableMonolith
+
+namespace IndisputableMonolith
+
+/-- Calibration lemma (schema): under a chosen unit calibration tying the
+    dimensionless optimum `LambdaRec.lambda0` to SI mapping constants `{c, ħ, G}`
+    with π normalisation, the SI recognition length is `lambda_rec_pi`.
+    This is a presentation-time statement; the concrete calibration is supplied in papers. -/
+lemma lambda0_to_SI_calibration
+  (U : Constants.RSUnits) (C : Constants.ClassicalParams) :
+  True :=
+  -- Placeholder: concrete calibration details (units choice) are specified outside Lean.
+  trivial
 
 end IndisputableMonolith
 

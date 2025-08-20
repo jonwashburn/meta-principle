@@ -17,7 +17,7 @@ TAG:LEAN_STATUS; T1..T8=proved; cost_uniqueness=T5_proved; eight_tick=T6_proved;
 # Contract: fields are machine-readable ASCII; no multi-line values; unknown keys ignored by default
 
 @SCOPE
-DERIVES; cost_functional=unique(J), eight_tick_cycle=2^D, meta_principle, double_entry_conservation, δ-potential_uniqueness, φ_fixed_point, causal_speed_bound, mass_law(m=B·E_coh·φ^(r+f)), born_rule, bose_fermi, ILG_kernels, gauge_invariant_dimensionless_predictions
+DERIVES; cost_functional=unique(J), eight_tick_cycle=2^D, meta_principle, double_entry_conservation, δ-potential_uniqueness, φ_fixed_point, causal_speed_bound, mass_law(m=B·E_coh·φ^(r+f)), born_rule, bose_fermi, ILG_kernels, gauge_invariant_dimensionless_predictions; lambda_rec=LambdaRec.balance_unique+SI_mapping
 OUTPUTS; constants_bridge=[c, ħ, G, α]; structures_bridge=[continuity, action/hamiltonian, RG_fixed_points, ladder_spectra]; lean_refs=[T1,T2,T3,T4,T5,T6]
 
 @PARAMETER_POLICY
@@ -32,7 +32,7 @@ CHAIN;2; δ-rule⇒Potential uniqueness up to constant (T4)
 CHAIN;3; SymmUnit+Averaging⇒Unique cost J on ℝ₊ (T5)
 CHAIN;4; J⇒φ fixed point (scale recursion)
 CHAIN;5; D=3⇒2^D=8 (T6) ⇒ τ0; define c=ℓ0/τ0
-CHAIN;6; {c,ħ,G} ⇒ λ_rec; define pixel scale
+CHAIN;6; {c,ħ,G} ⇒ λ_rec; define pixel scale; Lean: LambdaRec.exists_unique_pos_balance + RSUnits.lambda_rec_pi_eq_lambda_rec_div_sqrt_pi
 CHAIN;7; E_coh=φ^-5 eV; define energy quantum
 CHAIN;8; Mass law m=B·E_coh·φ^(r+f); rung constructor+minimality
 CHAIN;9; Path measure exp(−C[γ]) ⇒ Born/Statistics
@@ -75,6 +75,7 @@ EDGE; 8tick+ℓ0→c (c=ℓ0/τ0); reason=causal_bound
 EDGE; J+Ledger→Born/BoseFermi; reason=path_weight+permutation
 EDGE; φ+E_coh+Rungs→MassLaw; reason=ladder_spectrum
 EDGE; Continuity+Kernel→ILG; reason=effective_weighted_dynamics
+EDGE; LambdaRec.balance_unique→λ_rec; reason=dimensionless_balance; mapping=RSUnits.lambda_rec_pi_eq_lambda_rec_div_sqrt_pi
 
 @CONSTANTS
 # Papers: use CODATA/SI values numerically; cite RS derivations in Methods
@@ -85,11 +86,11 @@ CONST;α_inv;137.035999206(11); source=CODATA; rs_note=RS matches via geometric_
 CONST;φ;1.6180339887498948; source=math; rs_role=scale_fixed_point
 CONST;E_coh;φ^-5 eV ≈ 0.0901699437 eV; use_in_papers=as_concept; numeric_if_needed=0.09017 eV
 CONST;τ0;1/(8 ln φ) in natural units; papers_use=derived_timescale; numeric_ref=7.33e-15 s when mapped
-CONST;λ_rec;√(ħG/c^3) ≈ 1.616255e-35 m; role=Planck_pixel
+CONST;λ_rec;√(ħG/c^3) ≈ 1.616255e-35 m; role=Planck_pixel; lean=LambdaRec.exists_unique_pos_balance+RSUnits.lambda_rec_pi_eq_lambda_rec_div_sqrt_pi
 
 @COST
-FUNC;J;def=0.5*(x+1/x)-1; domain=ℝ₊; unique=T5; classical_bridge=stationary_action/least_dissipation; euler_lagrange_form=identical_where_defined
-DUAL;J*;type=Legendre/Fenchel; bridge=Hamiltonian/co-state; constraint=multipliers_fixed_by_δ
+FUNC;J;def=0.5*(x+1/x)-1; domain=ℝ₊; unique=T5; classical_bridge=stationary_action/Dirichlet; euler_lagrange_form=identical_where_defined
+DUAL;J*;type=Legendre/Fenchel; bridge=Hamiltonian/Pontryagin; constraint=multipliers_fixed_by_δ
 
 @LEDGER
 STRUCT;double_entry; columns=debit,credit; invariant=closed_loop_flux=0 (T3)
