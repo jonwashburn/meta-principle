@@ -2270,7 +2270,8 @@ def ofDisjointUnion {γ₁ γ₂ : Type}
   (cost_add₁ : ∀ a b, C₁ (comp₁ a b) = C₁ a + C₁ b)
   (cost_add₂ : ∀ a b, C₂ (comp₂ a b) = C₂ a + C₂ b)
   (norm₁ : ∑ g in A, Real.exp (-(C₁ g)) = 1)
-  (norm₂ : ∑ g in B, Real.exp (-(C₂ g)) = 1) :
+  (norm₂ : ∑ g in B, Real.exp (-(C₂ g)) = 1)
+  (w1 w2 : ℝ) (hw1 : 0 ≤ w1) (hw2 : 0 ≤ w2) (hsum : w1 + w2 = 1) :
   PathWeight (Sum γ₁ γ₂) :=
 { C := fun s => Sum.rec C₁ C₂ s
 , comp := fun x y =>
@@ -2282,24 +2283,45 @@ def ofDisjointUnion {γ₁ γ₂ : Type}
     intro a b; cases a <;> cases b <;> simp [cost_add₁, cost_add₂]
 , prob := fun s =>
     match s with
-    | Sum.inl a => Real.exp (-(C₁ a))
-    | Sum.inr b => Real.exp (-(C₂ b))
-, normSet := (A.attach.map ⟨fun x => Sum.inl x.1, by intro x y h; cases x; cases y; cases h; rfl⟩).image (fun x => x) ∪
-              (B.attach.map ⟨fun y => Sum.inr y.1, by intro x y h; cases x; cases y; cases h; rfl⟩).image (fun x => x)
+    | Sum.inl a => w1 * Real.exp (-(C₁ a))
+    | Sum.inr b => w2 * Real.exp (-(C₂ b))
+, normSet := (A.image Sum.inl) ∪ (B.image Sum.inr)
 , sum_prob_eq_one := by
     classical
-    -- Evaluate the sum over disjoint union: it splits into the two sums
-    -- and each equals 1 by assumption
-    -- We avoid deep finset equivalences; just rewrite via attach and map
-    have hA : ∑ s in (A.attach.map ⟨fun x => Sum.inl x.1, ?_⟩).image (fun x => x), Real.exp (-(C₁ (Classical.choice (Classical.decEq _ ▸ rfl)))) = ∑ a in A, Real.exp (-(C₁ a)) := by
-      -- This is a placeholder equality to keep the builder schematic without complex rewrites
-      -- Accept it as by rewriting through equivalences in concrete uses
-      simpa
-    have hB : ∑ s in (B.attach.map ⟨fun y => Sum.inr y.1, ?_⟩).image (fun x => x), Real.exp (-(C₂ (Classical.choice (Classical.decEq _ ▸ rfl)))) = ∑ b in B, Real.exp (-(C₂ b)) := by
-      simpa
-    -- Use the assumed normalizations
-    simpa [hA, hB, Finset.sum_union, Finset.disjoint_left] using by
-      simpa [norm₁, norm₂]
+    -- disjointness of images of inl and inr
+    have hdisj : Disjoint (A.image Sum.inl) (B.image Sum.inr) := by
+      refine Finset.disjoint_left.mpr ?_
+      intro s hsA hsB
+      rcases Finset.mem_image.mp hsA with ⟨a, ha, rfl⟩
+      rcases Finset.mem_image.mp hsB with ⟨b, hb, hEq⟩
+      cases hEq
+    -- sum over the union splits
+    have hsplit := Finset.sum_union hdisj
+    -- rewrite each part via sum_image
+    have hinjA : ∀ x ∈ A, ∀ y ∈ A, Sum.inl x = Sum.inl y → x = y := by
+      intro x hx y hy h; simpa using Sum.inl.inj h
+    have hinjB : ∀ x ∈ B, ∀ y ∈ B, Sum.inr x = Sum.inr y → x = y := by
+      intro x hx y hy h; simpa using Sum.inr.inj h
+    have hsumA : ∑ s in A.image Sum.inl, (match s with | Sum.inl a => w1 * Real.exp (-(C₁ a)) | Sum.inr _ => 0)
+                = w1 * ∑ a in A, Real.exp (-(C₁ a)) := by
+      -- sum over image inl
+      have := Finset.sum_image (s:=A) (f:=Sum.inl)
+        (g:=fun s => match s with | Sum.inl a => w1 * Real.exp (-(C₁ a)) | Sum.inr _ => 0) hinjA
+      -- simplify RHS
+      simpa using this
+    have hsumB : ∑ s in B.image Sum.inr, (match s with | Sum.inl _ => 0 | Sum.inr b => w2 * Real.exp (-(C₂ b)))
+                = w2 * ∑ b in B, Real.exp (-(C₂ b)) := by
+      have := Finset.sum_image (s:=B) (f:=Sum.inr)
+        (g:=fun s => match s with | Sum.inl _ => 0 | Sum.inr b => w2 * Real.exp (-(C₂ b))) hinjB
+      simpa using this
+    -- combine
+    have : ∑ s in (A.image Sum.inl ∪ B.image Sum.inr), (fun s => match s with
+      | Sum.inl a => w1 * Real.exp (-(C₁ a))
+      | Sum.inr b => w2 * Real.exp (-(C₂ b))) s
+         = w1 * ∑ a in A, Real.exp (-(C₁ a)) + w2 * ∑ b in B, Real.exp (-(C₂ b)) := by
+      simpa [hsplit, hsumA, hsumB, Finset.sum_image] 
+    -- finish with given normalizations and w1+w2=1
+    simpa [this, norm₁, norm₂, hsum, add_comm, add_left_comm, add_assoc]
 } 
 
 /-- Independence product constructor: probabilities multiply over independent components. -/
@@ -2311,10 +2333,31 @@ def product {γ₁ γ₂ : Type} (PW₁ : PathWeight γ₁) (PW₂ : PathWeight 
 , normSet := (PW₁.normSet.product PW₂.normSet)
 , sum_prob_eq_one := by
     classical
-    -- ∑_{(a,b) ∈ A×B} prob₁(a)·prob₂(b) = (∑_{a∈A} prob₁(a)) · (∑_{b∈B} prob₂(b)) = 1·1 = 1
-    have := Finset.mul_sum
-    -- Directly use product-sum lemma
-    simpa [Finset.sum_product, Finset.mem_product, PW₁.sum_prob_eq_one, PW₂.sum_prob_eq_one, Finset.sum_mul, mul_comm, mul_left_comm, mul_assoc]
+    -- ∑_{(a,b)∈A×B} prob₁(a)·prob₂(b) = (∑_{a∈A} prob₁(a)) · (∑_{b∈B} prob₂(b)) = 1
+    have hprod : ∑ p in PW₁.normSet.product PW₂.normSet, (PW₁.prob p.1 * PW₂.prob p.2)
+      = ∑ a in PW₁.normSet, ∑ b in PW₂.normSet, PW₁.prob a * PW₂.prob b := by
+      -- sum over product splits
+      simpa [Finset.mem_product] using
+        (Finset.sum_product (s:=PW₁.normSet) (t:=PW₂.normSet) (f:=fun a b => PW₁.prob a * PW₂.prob b))
+    have hfactor : ∑ a in PW₁.normSet, ∑ b in PW₂.normSet, PW₁.prob a * PW₂.prob b
+      = (∑ a in PW₁.normSet, PW₁.prob a) * (∑ b in PW₂.normSet, PW₂.prob b) := by
+      -- factor the inner sum (constant in a) out
+      have : ∑ a in PW₁.normSet, (PW₁.prob a) * (∑ b in PW₂.normSet, PW₂.prob b)
+             = (∑ b in PW₂.normSet, PW₂.prob b) * (∑ a in PW₁.normSet, PW₁.prob a) := by
+        simp [Finset.mul_sum, mul_comm, mul_left_comm, mul_assoc]
+      -- rewrite LHS to nested sum
+      have : ∑ a in PW₁.normSet, ∑ b in PW₂.normSet, PW₁.prob a * PW₂.prob b
+             = (∑ b in PW₂.normSet, PW₂.prob b) * (∑ a in PW₁.normSet, PW₁.prob a) := by
+        -- distribute using mul_sum inside
+        have hinner : ∀ a, ∑ b in PW₂.normSet, PW₁.prob a * PW₂.prob b = (PW₁.prob a) * ∑ b in PW₂.normSet, PW₂.prob b := by
+          intro a; simpa [Finset.mul_sum, mul_comm, mul_left_comm, mul_assoc]
+        -- apply across the outer sum
+        simpa [hinner] using this
+      -- commute product
+      simpa [mul_comm] using this
+    -- combine all equalities and the normalizations
+    have := hprod.trans hfactor
+    simpa [this, PW₁.sum_prob_eq_one, PW₂.sum_prob_eq_one]
 }
 
 end Quantum
