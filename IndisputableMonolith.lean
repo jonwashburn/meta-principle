@@ -1888,6 +1888,13 @@ theorem rs_pathweight_iface (γ : Type) (PW : PathWeight γ) :
   -- Placeholder existence; concrete instances supplied in applications
   exact ⟨{ normalized := True, exists_wave_repr := True }, { perm_invariant := True, symmetrization := True }⟩
 
+/-- Tiny normalization helper: if the normalization set is a singleton {g}, then prob g = 1. -/
+lemma prob_singleton_norm (γ : Type) (PW : PathWeight γ) {g : γ}
+  (h : PW.normSet = {g}) : PW.prob g = 1 := by
+  classical
+  have := congrArg (fun s : Finset γ => ∑ x in s, PW.prob x) h
+  simpa using this.trans PW.sum_prob_eq_one
+
 end Quantum
 
 end IndisputableMonolith

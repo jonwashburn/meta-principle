@@ -146,6 +146,7 @@ EXP;QuantumStats; standard confirmations ⇒ supports path-measure postulate
 
 @LEAN_REFERENCES
 LEAN;T1=mp_holds; T2=T2_atomicity; T3=T3_continuity; T4=Potential.unique_on_component; T5=Cost.T5_cost_uniqueness_on_pos; T6=eight_tick_min+T6_exist_8
+LEAN;Additions=Quantum.PathWeight(comp+norm); Quantum.prob_comp; Spectra.mass_ratio_power; UnitMapping.mapDelta{Charge,Time,Action}; ClassicalBridge.CoarseGrain.ContinuityEquation
 
 @PROOF_STATUS
 STATUS; T1=proved; T2=proved; T3=proved; T4=proved; T5=proved; T6=proved; T7=proved; T8=proved
