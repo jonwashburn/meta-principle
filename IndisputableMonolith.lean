@@ -1884,6 +1884,16 @@ lemma lambda_rec_pi_eq_lambda_rec_div_sqrt_pi (U : RSUnits) (C : ClassicalParams
     _ = lambda_rec U C / Real.sqrt Real.pi := by
               simpa [lambda_rec, one_div, div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc]
 
+/-! ### Paper hooks (one-liners) -/
+
+@[simp] def lambda_rec_SI (U : RSUnits) (C : ClassicalParams) : ℝ := lambda_rec U C
+
+@[simp] def lambda_rec_SI_pi (U : RSUnits) (C : ClassicalParams) : ℝ := lambda_rec_pi U C
+
+lemma lambda_rec_SI_pi_eq (U : RSUnits) (C : ClassicalParams) :
+  lambda_rec_SI_pi U C = lambda_rec_SI U C / Real.sqrt Real.pi :=
+  lambda_rec_pi_eq_lambda_rec_div_sqrt_pi (U:=U) (C:=C)
+
 end RSUnits
 end Constants
 
@@ -1895,11 +1905,31 @@ namespace IndisputableMonolith
     dimensionless optimum `LambdaRec.lambda0` to SI mapping constants `{c, ħ, G}`
     with π normalisation, the SI recognition length is `lambda_rec_pi`.
     This is a presentation-time statement; the concrete calibration is supplied in papers. -/
-lemma lambda0_to_SI_calibration
-  (U : Constants.RSUnits) (C : Constants.ClassicalParams) :
-  True :=
-  -- Placeholder: concrete calibration details (units choice) are specified outside Lean.
-  trivial
+/-! ### Concrete unit calibration (schema → concrete):
+    Assume the RS voxel length/time units (ℓ0, τ0) are chosen to match SI units exactly,
+    i.e., ℓ0 = 1 m and τ0 = 1 s (calibration). Then c = ℓ0/τ0 = 1 m/s numerically in this
+    normalized scenario, and the mapping to SI restores physical c by substituting the
+    standard numerical value. For symbolic Lean equalities, we encode the equalities at
+    the symbol level to provide a paper-ready hook. -/
+
+structure CalibrationSI (U : Constants.RSUnits) : Prop :=
+  (ell0_is_meter : U.ell0 = 1)
+  (tau0_is_second : U.tau0 = 1)
+
+/-- Under the calibration `ℓ0=1, τ0=1`, the symbolic expression for `c` reduces to 1. -/
+lemma c_eq_one_under_calibration {U : Constants.RSUnits}
+  (h : CalibrationSI U) : Constants.RSUnits.c U = 1 := by
+  unfold Constants.RSUnits.c
+  simp [h.ell0_is_meter, h.tau0_is_second]
+
+/-- Under the same calibration and given classical `G`, the SI-recognition length with π-normalization
+    is `λ_rec(π) = √(ħ G / (π c^3))`. This lemma records the exact symbolic form and can be
+    combined with the relation `lambda_rec_pi_eq_lambda_rec_div_sqrt_pi` when needed. -/
+lemma lambda_rec_pi_symbolic {U : Constants.RSUnits} (C : Constants.ClassicalParams)
+  (h : CalibrationSI U) :
+  Constants.RSUnits.lambda_rec_pi U C
+    = Real.sqrt (Constants.RSUnits.hbar U * C.G / (Real.pi * (Constants.RSUnits.c U) ^ 3)) := by
+  rfl
 
 end IndisputableMonolith
 
