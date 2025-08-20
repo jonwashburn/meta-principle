@@ -1827,6 +1827,29 @@ lemma mass_using_EcohDerived (U : Constants.RSUnits) (k : Nat) (r : ℤ) (f : �
 noncomputable def phi_zpow (z : ℤ) : ℝ :=
   if 0 ≤ z then (Constants.phi : ℝ) ^ (Int.toNat z) else 1 / (Constants.phi : ℝ) ^ (Int.toNat (-z))
 
+lemma mass_ratio_zpow (U : Constants.RSUnits)
+  (k2 k1 : Nat) (r2 r1 : ℤ) (f : ℝ) :
+  mass U k2 r2 f / mass U k1 r1 f
+    = (B_of k2 / B_of k1) * phi_zpow (r2 - r1) := by
+  classical
+  by_cases hle : r1 ≤ r2
+  · -- nonnegative difference: use the `ge` branch
+    have hnz : 0 ≤ r2 - r1 := sub_nonneg.mpr hle
+    have hpow := mass_ratio_power_ge U k2 k1 r2 r1 f hle
+    have : phi_zpow (r2 - r1) = (Constants.phi : ℝ) ^ (Int.toNat (r2 - r1)) := by
+      simp [phi_zpow, hnz]
+    simpa [this] using hpow
+  · -- negative difference: use the `le` branch and reciprocal power
+    have hlt : r2 < r1 := lt_of_not_ge hle
+    have hpow := mass_ratio_power_le U k2 k1 r2 r1 f hlt
+    have hneg : ¬ (0 ≤ r2 - r1) := by
+      have : r2 - r1 < 0 := sub_neg.mpr hlt
+      exact not_le.mpr this
+    have : phi_zpow (r2 - r1) = 1 / (Constants.phi : ℝ) ^ (Int.toNat (r1 - r2)) := by
+      have hneg' : - (r2 - r1) = (r1 - r2) := by ring
+      simp [phi_zpow, hneg, hneg']
+    simpa [this] using hpow
+
 @[simp] lemma mass_ratio_same_r_k_succ (U : Constants.RSUnits) (k : Nat) (r : ℤ) (f : ℝ) :
   mass U (k+1) r f / mass U k r f = 2 := by
   have hpos : mass U k r f ≠ 0 := ne_of_gt (mass_pos U k r f)
